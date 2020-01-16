@@ -38,7 +38,7 @@ Points kmeansCPU(const Points& points, Points centroids, size_t number_of_exampl
     std::vector<size_t> assignments(points.size());
     for(int i = 0; i < number_of_iterations; ++i){
         //TODO assign each example to the nearest cluster
-        for(int example = 0; i < number_of_examples - 1; ++example) {
+        for(int example = 0; example < number_of_examples - 1; ++example) {
             double currentDistance = std::numeric_limits<double>::max();
             size_t currentCentroid = 0;
             // for(int centroid = 0; i < NUMBER_OF_CLUSTERS; ++centroid) {
