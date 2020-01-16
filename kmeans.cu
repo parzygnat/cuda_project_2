@@ -5,7 +5,7 @@
 #include <random>
 #include <vector>
 #include <chrono>
-
+#define NUMBER_OF_CLUSTERS 8
 
 //TODO declare a Datum struct
 struct Datum {
@@ -34,21 +34,30 @@ double squared_distance(Datum a, Datum b) {
     return square(a.x - b.x) + square(a.y - b.y) + square(a.z - b.z);
 }
 
-Points kmeansCPU(const Points& points,
-    size_t k,
-    size_t number_of_iterations) {
-        //TODO randomize k clusters from available examples
-
-        //TODO assign each Datum to the nearest cluster
-
+Points kmeansCPU(const Points& points, Points centroids, size_t number_of_examples, size_t number_of_iterations) {
+    std::vector<size_t> assignments(data.size());
+    for(int i = 0; i < number_of_iterations; ++i){
+        //TODO assign each example to the nearest cluster
+        for(int example = 0; i < number_of_examples; ++example) {
+            currentDistance = std::numeric_limits<double>::max();
+            currentCentroid = 0;
+            for(int centroid = 0; i < NUMBER_OF_CLUSTERS; ++centroid) {
+                if(squared_distance(points[example], centroids[centroid]) < currentDistance){
+                    currentDistance = squared_distance(points[example], centroids[centroid];
+                    currentCentroid = centroid;
+                }
+            }
+            assignments[example] = currentCentroid;
+        }
         //TODO move clusters - calculate sums
 
         //TODO move clusters - divide them by number of examples in each clusters
 
         //TODO return means
     }
+    }
 
-void runCPU(Points points, size_t number_of_examples, size_t number_of_iterations, double grid_max_value)
+void runCPU(Points points, Points centroids, size_t number_of_examples, size_t number_of_iterations, double grid_max_value)
 {
     printf("Starting sequential kmeans\n");
     auto start = std::chrono::system_clock::now();
@@ -70,7 +79,7 @@ int main(int argc, char *argv[])
     size_t number_of_examples = atoi(argv[1]);
     double grid_max_value = atof(argv[2]);
     size_t number_of_iterations = atoi(argv[3]);
-    if(number_of_examples%8 != 0) {
+    if(number_of_examples%NUMBER_OF_CLUSTERS != 0) {
         printf("The number of examples has to be divisible by 8\n\n");
         return 0;
     }
@@ -81,31 +90,31 @@ int main(int argc, char *argv[])
     std::uniform_real_distribution<double> indices_lower(-grid_max_value, -grid_max_value*0.5);
 
     for(int i = 0; i < number_of_examples; ++i) {
-        if(i < number_of_examples / 8){
+        if(i < number_of_examples / NUMBER_OF_CLUSTERS){
         points[i].x = indices_lower(random_number_generator);
         points[i].y = indices_upper(random_number_generator);
         points[i].z = indices_upper(random_number_generator);
-        } else if(i < 2*number_of_examples/8) {
+        } else if(i < 2*number_of_examples/NUMBER_OF_CLUSTERS) {
         points[i].x = indices_lower(random_number_generator);
         points[i].y = indices_upper(random_number_generator);
         points[i].z = indices_lower(random_number_generator);
-        } else if(i < 3*number_of_examples/8) {
+        } else if(i < 3*number_of_examples/NUMBER_OF_CLUSTERS) {
         points[i].x = indices_upper(random_number_generator);
         points[i].y = indices_upper(random_number_generator);
         points[i].z = indices_lower(random_number_generator);
-        } else if(i < 4*number_of_examples/8) {
+        } else if(i < 4*number_of_examples/NUMBER_OF_CLUSTERS) {
         points[i].x = indices_upper(random_number_generator);
         points[i].y = indices_upper(random_number_generator);
         points[i].z = indices_upper(random_number_generator);
-        } else if(i < 5*number_of_examples/8) {
+        } else if(i < 5*number_of_examples/NUMBER_OF_CLUSTERS) {
         points[i].x = indices_upper(random_number_generator);
         points[i].y = indices_lower(random_number_generator);
         points[i].z = indices_upper(random_number_generator);
-        } else if(i < 6*number_of_examples/8) {
+        } else if(i < 6*number_of_examples/NUMBER_OF_CLUSTERS) {
         points[i].x = indices_upper(random_number_generator);
         points[i].y = indices_lower(random_number_generator);
         points[i].z = indices_lower(random_number_generator);
-        } else if(i < 7*number_of_examples/8) {
+        } else if(i < 7*number_of_examples/NUMBER_OF_CLUSTERS) {
         points[i].x = indices_lower(random_number_generator);
         points[i].y = indices_lower(random_number_generator);
         points[i].z = indices_lower(random_number_generator);
@@ -115,11 +124,18 @@ int main(int argc, char *argv[])
         points[i].z = indices_upper(random_number_generator);
         }
     }
+    Points centroids(NUMBER_OF_CLUSTERS);
+    static std::random_device seed;
+    static std::mt19937 random_number_generator(seed());
+    std::uniform_real_distribution<double> indices(0, number_of_examples - 1);
+    for(auto& centroid : centroids) {
+        centroid.x = points[indices(random_number_generator)];
+    }
     // Datum PRINTING
     // for(auto& Datum : points) {
     //     printf("x is %f y is %f and z is %f \n", Datum.x, Datum.y, Datum.z);
     // }
-    runCPU(points, number_of_examples, number_of_iterations, grid_max_value);
+    runCPU(points, centroids, number_of_examples, number_of_iterations, grid_max_value);
     // runGpu();
     return 0;
 }
