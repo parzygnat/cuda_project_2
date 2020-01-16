@@ -41,7 +41,7 @@ double squared_distance(Datum a, Datum b) {
 //         //TODO return means
 //     }
 
-void runCPu(Data data, size_t number_of_Datums, size_t number_of_iterations, double grid_max_value)
+void runCPU(Data data, size_t number_of_Datums, size_t number_of_iterations, double grid_max_value)
 {
     printf("Starting sequential bfs.\n\n\n");
     auto start = std::chrono::system_clock::now();
@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
     // for(auto& Datum : data) {
     //     printf("x is %f y is %f and z is %f \n", Datum.x, Datum.y, Datum.z);
     // }
-    runCpu(data, number_of_Datums, number_of_iterations, grid_max_value);
+    runCPU(data, number_of_Datums, number_of_iterations, grid_max_value);
     // runGpu();
     return 0;
 }
