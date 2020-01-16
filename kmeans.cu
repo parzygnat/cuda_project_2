@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
         point.z = indices(random_number_generator);
     }
     for(auto& point : data) {
-        printf("x is %d y is %d and z is %d \n", point.x, point.y, point.z);
+        printf("x is %f y is %f and z is %f \n", point.x, point.y, point.z);
     }
     // runCpu();
     // runGpu();
