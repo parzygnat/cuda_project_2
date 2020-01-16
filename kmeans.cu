@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
     size_t number_of_points = atoi(argv[1]);
     double grid_max_value = atoi(argv[2]);
     size_t number_of_iterations = atoi(argv[3]);
-    Dataframe data(size_t);
+    DataFrame data(size_t);
     static std::random_device seed;
     static std::mt19937 random_number_generator(seed());
     std::uniform_real_distribution<double> indices(-max, max);
