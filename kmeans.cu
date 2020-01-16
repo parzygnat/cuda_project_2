@@ -22,7 +22,7 @@ double squared_distance(Point a, Point b) {
     return square(a.x - b.x) + square(a.y - b.y) + square(a.z - b.z);
 }
 
-// using data = std::vector<Point>;
+ using DataFrame = std::vector<Point>;
 // DataFrame k_means(const DataFrame& data,
 //     size_t k,
 //     size_t number_of_iterations) {
@@ -37,7 +37,6 @@ double squared_distance(Point a, Point b) {
 //         //TODO return means
 //     }
 
-    
 int main(int argc, char *argv[])
 {
     if(argc < 2)
