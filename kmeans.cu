@@ -19,7 +19,7 @@ double square(double a) {
 //TODO create a function that returns squared distance of two points
 
 double squared_distance(Point a, Point b) {
-    return square(a.x - b.x) + square(a.y - b.y) + square(a.z - c.z);
+    return square(a.x - b.x) + square(a.y - b.y) + square(a.z - b.z);
 }
 
 // using data = std::vector<Point>;
