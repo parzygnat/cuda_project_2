@@ -35,15 +35,15 @@ double squared_distance(Datum a, Datum b) {
 }
 
 Points kmeansCPU(const Points& points, Points centroids, size_t number_of_examples, size_t number_of_iterations) {
-    std::vector<size_t> assignments(data.size());
+    std::vector<size_t> assignments(points.size());
     for(int i = 0; i < number_of_iterations; ++i){
         //TODO assign each example to the nearest cluster
         for(int example = 0; i < number_of_examples; ++example) {
-            currentDistance = std::numeric_limits<double>::max();
-            currentCentroid = 0;
+            double currentDistance = std::numeric_limits<double>::max();
+            size_t currentCentroid = 0;
             for(int centroid = 0; i < NUMBER_OF_CLUSTERS; ++centroid) {
                 if(squared_distance(points[example], centroids[centroid]) < currentDistance){
-                    currentDistance = squared_distance(points[example], centroids[centroid];
+                    currentDistance = squared_distance(points[example], centroids[centroid]);
                     currentCentroid = centroid;
                 }
             }
@@ -61,7 +61,7 @@ void runCPU(Points points, Points centroids, size_t number_of_examples, size_t n
 {
     printf("Starting sequential kmeans\n");
     auto start = std::chrono::system_clock::now();
-    kmeansCPU(points, number_of_examples, number_of_iterations, grid_max_value);
+    kmeansCPU(points, centroids, number_of_examples, number_of_iterations, grid_max_value);
     auto end = std::chrono::system_clock::now();
     float duration = 1000.0*std::chrono::duration<float>(end - start).count();
     printf("\nElapsed time in milliseconds : %f ms.\n\n", duration);
@@ -125,11 +125,9 @@ int main(int argc, char *argv[])
         }
     }
     Points centroids(NUMBER_OF_CLUSTERS);
-    static std::random_device seed;
-    static std::mt19937 random_number_generator(seed());
     std::uniform_real_distribution<double> indices(0, number_of_examples - 1);
     for(auto& centroid : centroids) {
-        centroid.x = points[indices(random_number_generator)];
+        centroid = points[indices(random_number_generator)];
     }
     // Datum PRINTING
     // for(auto& Datum : points) {
