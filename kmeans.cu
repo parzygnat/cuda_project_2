@@ -78,37 +78,37 @@ int main(int argc, char *argv[])
 
     for(int i = 0; i < number_of_examples; ++i) {
         if(i < number_of_examples / 8){
-        Datum.x = indices_lower(random_number_generator);
-        Datum.y = indices_upper(random_number_generator);
-        Datum.z = indices_upper(random_number_generator);
+        data[i].x = indices_lower(random_number_generator);
+        data[i].y = indices_upper(random_number_generator);
+        data[i].z = indices_upper(random_number_generator);
         } else if(i < 2*number_of_examples/8) {
-        Datum.x = indices_lower(random_number_generator);
-        Datum.y = indices_upper(random_number_generator);
-        Datum.z = indices_lower(random_number_generator);
+        data[i].x = indices_lower(random_number_generator);
+        data[i].y = indices_upper(random_number_generator);
+        data[i].z = indices_lower(random_number_generator);
         } else if(i < 3*number_of_examples/8) {
-        Datum.x = indices_upper(random_number_generator);
-        Datum.y = indices_upper(random_number_generator);
-        Datum.z = indices_lower(random_number_generator);
+        data[i].x = indices_upper(random_number_generator);
+        data[i].y = indices_upper(random_number_generator);
+        data[i].z = indices_lower(random_number_generator);
         } else if(i < 4*number_of_examples/8) {
-        Datum.x = indices_upper(random_number_generator);
-        Datum.y = indices_upper(random_number_generator);
-        Datum.z = indices_upper(random_number_generator);
+        data[i].x = indices_upper(random_number_generator);
+        data[i].y = indices_upper(random_number_generator);
+        data[i].z = indices_upper(random_number_generator);
         } else if(i < 5*number_of_examples/8) {
-        Datum.x = indices_upper(random_number_generator);
-        Datum.y = indices_lower(random_number_generator);
-        Datum.z = indices_upper(random_number_generator);
+        data[i].x = indices_upper(random_number_generator);
+        data[i].y = indices_lower(random_number_generator);
+        data[i].z = indices_upper(random_number_generator);
         } else if(i < 6*number_of_examples/8) {
-        Datum.x = indices_upper(random_number_generator);
-        Datum.y = indices_lower(random_number_generator);
-        Datum.z = indices_lower(random_number_generator);
+        data[i].x = indices_upper(random_number_generator);
+        data[i].y = indices_lower(random_number_generator);
+        data[i].z = indices_lower(random_number_generator);
         } else if(i < 7*number_of_examples/8) {
-        Datum.x = indices_lower(random_number_generator);
-        Datum.y = indices_lower(random_number_generator);
-        Datum.z = indices_lower(random_number_generator);
+        data[i].x = indices_lower(random_number_generator);
+        data[i].y = indices_lower(random_number_generator);
+        data[i].z = indices_lower(random_number_generator);
         } else if(i < number_of_examples) {
-        Datum.x = indices_lower(random_number_generator);
-        Datum.y = indices_lower(random_number_generator);
-        Datum.z = indices_upper(random_number_generator);
+        data[i].x = indices_lower(random_number_generator);
+        data[i].y = indices_lower(random_number_generator);
+        data[i].z = indices_upper(random_number_generator);
         }
     }
     // Datum PRINTING
