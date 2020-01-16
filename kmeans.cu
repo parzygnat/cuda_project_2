@@ -4,6 +4,8 @@
 #include <random>
 #include <vector>
 
+using DataFrame = std::vector<Point>;
+
 //TODO declare a point struct
 struct Point {
     double x{0};
@@ -22,7 +24,6 @@ double squared_distance(Point a, Point b) {
     return square(a.x - b.x) + square(a.y - b.y) + square(a.z - b.z);
 }
 
- using DataFrame = std::vector<Point>;
 // DataFrame k_means(const DataFrame& data,
 //     size_t k,
 //     size_t number_of_iterations) {
@@ -36,7 +37,6 @@ double squared_distance(Point a, Point b) {
 
 //         //TODO return means
 //     }
-using DataFrame = std::vector<Point>;
 int main(int argc, char *argv[])
 {
     if(argc < 2)
