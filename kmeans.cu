@@ -41,12 +41,12 @@ Points kmeansCPU(const Points& points, Points centroids, size_t number_of_exampl
         for(int example = 0; i < number_of_examples; ++example) {
             double currentDistance = std::numeric_limits<double>::max();
             size_t currentCentroid = 0;
-            for(int centroid = 0; i < NUMBER_OF_CLUSTERS; ++centroid) {
-                if(squared_distance(points[example], centroids[centroid]) < currentDistance){
-                    currentDistance = squared_distance(points[example], centroids[centroid]);
-                    currentCentroid = centroid;
-                }
-            }
+            // for(int centroid = 0; i < NUMBER_OF_CLUSTERS; ++centroid) {
+            //     if(squared_distance(points[example], centroids[centroid]) < currentDistance){
+            //         currentDistance = squared_distance(points[example], centroids[centroid]);
+            //         currentCentroid = centroid;
+            //     }
+            // }
             assignments[example] = currentCentroid;
         }
         //TODO move clusters - calculate sums
