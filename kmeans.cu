@@ -4,7 +4,6 @@
 #include <random>
 #include <vector>
 
-using DataFrame = std::vector<Point>;
 
 //TODO declare a point struct
 struct Point {
@@ -12,6 +11,9 @@ struct Point {
     double y{0};
     double z{0};
 };
+
+using DataFrame = std::vector<Point>;
+
 //TODO create a square function 
 
 double square(double a) {
