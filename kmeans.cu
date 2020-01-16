@@ -57,11 +57,11 @@ Points kmeansCPU(const Points& points, Points centroids, size_t number_of_exampl
     }
     }
 
-void runCPU(Points points, Points centroids, size_t number_of_examples, size_t number_of_iterations, double grid_max_value)
+void runCPU(Points points, Points centroids, size_t number_of_examples, size_t number_of_iterations)
 {
     printf("Starting sequential kmeans\n");
     auto start = std::chrono::system_clock::now();
-    kmeansCPU(points, centroids, number_of_examples, number_of_iterations, grid_max_value);
+    kmeansCPU(points, centroids, number_of_examples, number_of_iterations);
     auto end = std::chrono::system_clock::now();
     float duration = 1000.0*std::chrono::duration<float>(end - start).count();
     printf("\nElapsed time in milliseconds : %f ms.\n\n", duration);
@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
     // for(auto& Datum : points) {
     //     printf("x is %f y is %f and z is %f \n", Datum.x, Datum.y, Datum.z);
     // }
-    runCPU(points, centroids, number_of_examples, number_of_iterations, grid_max_value);
+    runCPU(points, centroids, number_of_examples, number_of_iterations);
     // runGpu();
     return 0;
 }
