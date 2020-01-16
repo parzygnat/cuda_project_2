@@ -72,9 +72,9 @@ int main(int argc, char *argv[])
     size_t number_of_iterations = atoi(argv[3]);
     Data data(number_of_examples);
     Boundaries.upper_max = grid_max_value;
-    Boundaries.upper_min = grid_max_value*0.3;
+    Boundaries.upper_min = grid_max_value*0.5;
     Boundaries.lower_max = -grid_max_value;
-    Boundaries.lower_min = -grid_max_value*0.3;
+    Boundaries.lower_min = -grid_max_value*0.5;
     static std::random_device seed;
     static std::mt19937 random_number_generator(seed());
     std::uniform_real_distribution<double> indices_upper(Boundaries.upper_min, Boundaries.upper_max);
