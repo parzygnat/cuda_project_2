@@ -1,5 +1,7 @@
 #include <algorithm>
 #include <cstdlib>
+#include <stdlib>
+#include <iostream>
 #include <limits>
 #include <random>
 #include <vector>
@@ -48,7 +50,8 @@ void runCPu(Data data, size_t number_of_Datums, size_t number_of_iterations, dou
     float duration = 1000.0*std::chrono::duration<float>(end - start).count();
     printf("\n \n\nElapsed time in milliseconds : %f ms.\n\n", duration);
     
-};
+}
+
 int main(int argc, char *argv[])
 {
     if(argc < 2)
