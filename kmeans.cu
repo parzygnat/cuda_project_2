@@ -72,9 +72,9 @@ int main(int argc, char *argv[])
         Datum.z = indices(random_number_generator);
     }
     // Datum PRINTING
-    // for(auto& Datum : data) {
-    //     printf("x is %f y is %f and z is %f \n", Datum.x, Datum.y, Datum.z);
-    // }
+    for(auto& Datum : data) {
+        printf("x is %f y is %f and z is %f \n", Datum.x, Datum.y, Datum.z);
+    }
     runCPU(data, number_of_Datums, number_of_iterations, grid_max_value);
     // runGpu();
     return 0;
