@@ -54,6 +54,7 @@ Points kmeansCPU(const Points& points, Points centroids, size_t number_of_exampl
         //TODO move clusters - divide them by number of examples in each clusters
 
         //TODO return means
+        return centroids;
     }
     }
 
