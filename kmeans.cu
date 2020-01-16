@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
     DataFrame data(size_t);
     static std::random_device seed;
     static std::mt19937 random_number_generator(seed());
-    std::uniform_real_distribution<double> indices(-max, max);
+    std::uniform_real_distribution<double> indices(-grid_max_value, grid_max_value);
     for(auto& point : data) {
         point.x = indices(random_number_generator);
         point.y = indices(random_number_generator);
