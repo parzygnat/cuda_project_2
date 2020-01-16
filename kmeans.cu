@@ -4,6 +4,7 @@
 #include <limits>
 #include <random>
 #include <vector>
+#include <chrono>
 
 
 //TODO declare a Datum struct
