@@ -41,11 +41,11 @@ int main(int argc, char *argv[])
 {
     if(argc < 2)
     { 
-      printf("Not enough arguments\n");
+      printf("Not enough arguments\n 1st argument -> number of points to generate \n 2nd argument -> maximal absolute value on grid \n 3rd argument -> number of iterations of the k-means algorithm");
      return 0;
     }
     size_t number_of_points = atoi(argv[1]);
-    double grid_max_value = atoi(argv[2]);
+    double grid_max_value = atof(argv[2]);
     size_t number_of_iterations = atoi(argv[3]);
     std::vector<Point> data(number_of_points);
     static std::random_device seed;
