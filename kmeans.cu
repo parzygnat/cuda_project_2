@@ -36,7 +36,7 @@ double squared_distance(Point a, Point b) {
 
 //         //TODO return means
 //     }
-
+using DataFrame = std::vector<Point>;
 int main(int argc, char *argv[])
 {
     if(argc < 2)
