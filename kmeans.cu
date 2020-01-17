@@ -93,7 +93,7 @@ __device__ float distance_squared(float x1, float x2, float y1, float y2, float 
     return (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) + (z1-z2)*(z1-z2);
 }
 
-__global__ void distance_calculation(Datum* d_points, Datum* d_centroids, Datum* new_centroids, size_t* counters, size_t* assignments, size_t number_of_examples, size_t number_of_clusters, size_t* if_changed) {
+__global__ void distances_calculation(Datum* d_points, Datum* d_centroids, Datum* new_centroids, size_t* counters, size_t* assignments, size_t number_of_examples, size_t number_of_clusters, size_t* if_changed) {
     size_t tid = blockIdx.x * blockDim.x + threadIdx.x;
     if (tid >= number_of_examples) return;
     size_t local_tid = blockIdx.x;
@@ -107,7 +107,7 @@ __global__ void distance_calculation(Datum* d_points, Datum* d_centroids, Datum*
     float currentDistance = FLT_MAX;
     float currentCentroid = 0;
     if(local_tid < number_of_clusters) {
-        local_centroids[tid]= centroids[tid];
+        local_centroids[tid]= d_centroids[tid];
     }
     for(int i = 0; i < number_of_clusters; ++i) {
         _distance = distance_squared(_x, local_centroids[i].x, _y,local_centroids[i].y , _z, local_centroids[i].z);
@@ -124,9 +124,9 @@ __global__ void distance_calculation(Datum* d_points, Datum* d_centroids, Datum*
     }
 
       // Slow but simple.
-    atomicAdd(&new_sums_x[currentCentroid], _x);
-    atomicAdd(&new_sums_y[currentCentroid], _y);
-    atomicAdd(&new_sums_z[currentCentroid], _z);
+    atomicAdd(&new_centroids[currentCentroid], _x);
+    atomicAdd(&new_centroids[currentCentroid], _y);
+    atomicAdd(&new_centroids[currentCentroid], _z);
     atomicAdd(&counters[currentCentroid], 1);
 
 }
@@ -150,14 +150,10 @@ void runGPU(Points points, Points centroids, size_t number_of_examples, float th
     cudaMallocManaged(&assignments, points.size()*sizeof(size_t));
     thrust::device_ptr<int> indices(if_changed);
     for(int i = 0; i < number_of_examples; ++i) {
-        d_points[i].x = points[i].x;
-        d_points[i].y = points[i].y;
-        d_points[i].z = points[i].z;
+        d_points[i] = points[i];
     }
     for(int i = 0; i < number_of_clusters; ++i) {
-        d_centroids[i].x = centroids[i].x;
-        d_centroids[i].y = centroids[i].y;
-        d_centroids[i].z = centroids[i].z;
+        d_centroids[i] = centroids[i];
     }
     int num_threads = 1024;
     int num_blocks = (number_of_examples + num_threads - 1) / num_threads;
