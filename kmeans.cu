@@ -95,7 +95,7 @@ __global__ void distances_calculation(Datum* d_points, Datum* d_centroids, Datum
     size_t tid = blockIdx.x * blockDim.x + threadIdx.x;
     if (tid >= number_of_examples) return;
     size_t local_tid = blockIdx.x;
-    extern __shared__ Datum* local_centroids;
+    extern __shared__ Datum local_centroids[];
     //coalesced read
     float _distance;
     float _x = d_points[tid].x;
