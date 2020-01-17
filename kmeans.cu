@@ -7,28 +7,17 @@
 #include <chrono>
 #define NUMBER_OF_CLUSTERS 8
 
-//TODO declare a Datum struct
 struct Datum {
     double x{0};
     double y{0};
     double z{0};
 };
 
-struct Boundaries {
-    double upper_max{0};
-    double upper_min{0};
-    double lower_max{0};
-    double lower_min{0};
-};
-
 using Points = std::vector<Datum>;
-//TODO create a square function 
 
 double square(double a) {
     return a*a;
 }
-
-//TODO create a function that returns squared distance of two examples
 
 double squared_distance(Datum a, Datum b) {
     return square(a.x - b.x) + square(a.y - b.y) + square(a.z - b.z);
@@ -40,7 +29,6 @@ Points kmeansCPU(const Points& points, Points centroids, size_t number_of_exampl
     while(changed/number_of_examples > threshold){
         //printf("changed is %f\n", changed);
         changed = 0;
-        //TODO assign each example to the nearest cluster
         for(int example = 0; example < number_of_examples - 1; ++example) {
             double currentDistance = std::numeric_limits<double>::max();
             size_t currentCentroid = 0;
@@ -53,7 +41,6 @@ Points kmeansCPU(const Points& points, Points centroids, size_t number_of_exampl
             if(assignments[example] != currentCentroid) ++changed;
             assignments[example] = currentCentroid;
         }
-        //TODO move clusters - calculate sums
         std::vector<size_t> counter(NUMBER_OF_CLUSTERS, 0);
         Points new_centroids(NUMBER_OF_CLUSTERS);
         for(int assignment = 0; assignment < assignments.size() - 1; ++assignment) {
@@ -62,7 +49,6 @@ Points kmeansCPU(const Points& points, Points centroids, size_t number_of_exampl
             new_centroids[assignments[assignment]].z += points[assignment].z;
             counter[assignments[assignment]] = counter[assignments[assignment]] + 1;
         }
-        //TODO move clusters - divide them by number of examples in each clusters
         for(int centroid = 0; centroid < NUMBER_OF_CLUSTERS - 1; ++centroid) {
             const auto count = std::max<size_t>(1, counter[centroid]);
             centroids[centroid].x = new_centroids[centroid].x/count;
@@ -71,7 +57,6 @@ Points kmeansCPU(const Points& points, Points centroids, size_t number_of_exampl
         }
         
     }
-    //TODO return means
     return centroids;
     }
 
