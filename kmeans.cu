@@ -125,7 +125,7 @@ __global__ void distances_calculation(Datum* d_points, Datum* d_centroids, Datum
 
       // Slow but simple.
     if(tid == 0) {
-    Datum ax = new_centroids[currentCentroid];
+    printf("%d\n", new_centroids[currentCentroid]);
     // atomicAdd(&new_centroids[currentCentroid].x, _x);
     // atomicAdd(&new_centroids[currentCentroid].y, _y);
     // atomicAdd(&new_centroids[currentCentroid].z, _z);
@@ -155,7 +155,6 @@ void runGPU(Points points, Points centroids, size_t number_of_examples, float th
     }
     for(int i = 0; i < number_of_clusters; ++i) {
         d_centroids[i] = centroids[i];
-        new_centroids[i] = centroids[i];
         new_centroids[i].x = 0;
         new_centroids[i].y = 0;
         new_centroids[i].z = 0;
