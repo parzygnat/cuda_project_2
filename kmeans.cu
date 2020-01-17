@@ -124,10 +124,10 @@ __global__ void distances_calculation(Datum* d_points, Datum* d_centroids, Datum
     printf("im tid %d\n", tid);
 
       // Slow but simple.
-    atomicAdd(&new_centroids[currentCentroid].x, _x);
-    atomicAdd(&new_centroids[currentCentroid].y, _y);
-    atomicAdd(&new_centroids[currentCentroid].z, _z);
-    atomicAdd(&counters[currentCentroid], 1);
+    atomicAdd((float*)&new_centroids[currentCentroid].x, _x);
+    atomicAdd((float*)&new_centroids[currentCentroid].y, _y);
+    atomicAdd((float*)&new_centroids[currentCentroid].z, _z);
+    atomicAdd((size_t*)&counters[currentCentroid], 1);
 
 }
 
@@ -154,6 +154,7 @@ void runGPU(Points points, Points centroids, size_t number_of_examples, float th
         d_centroids[i] = centroids[i];
         new_centroids[i].x = 0;
         new_centroids[i].y = 0;
+        new_centroids[i].z = 0;
     }
     
     int num_threads = 1024;
