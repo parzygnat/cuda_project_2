@@ -38,7 +38,7 @@ Points kmeansCPU(const Points& points, Points centroids, size_t number_of_exampl
     std::vector<size_t> assignments(number_of_examples);
     double changed = number_of_examples;
     while(changed/number_of_examples > threshold){
-        printf("changed is %d\n", changed);
+        printf("changed is %f\n", changed);
         changed = 0;
         //TODO assign each example to the nearest cluster
         for(int example = 0; example < number_of_examples - 1; ++example) {
