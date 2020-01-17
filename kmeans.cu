@@ -125,11 +125,11 @@ __global__ void distances_calculation(Datum* d_points, Datum* d_centroids, Datum
 
       // Slow but simple.
     if(tid == 0) {
-    printf("type is.... %s \n", typeof(&new_centroids[currentCentroid].x));
-    atomicAdd(&new_centroids[currentCentroid].x, _x);
-    atomicAdd(&new_centroids[currentCentroid].y, _y);
-    atomicAdd(&new_centroids[currentCentroid].z, _z);
-    atomicAdd(&counters[currentCentroid], 1);
+    float* ax = &new_centroids[currentCentroid].x;
+    // atomicAdd(&new_centroids[currentCentroid].x, _x);
+    // atomicAdd(&new_centroids[currentCentroid].y, _y);
+    // atomicAdd(&new_centroids[currentCentroid].z, _z);
+    // atomicAdd(&counters[currentCentroid], 1);
     }
 
 }
