@@ -133,6 +133,7 @@ __global__ void distances_calculation(Datum* d_points, Datum* d_centroids, Datum
 
 void runGPU(Points points, Points centroids, size_t number_of_examples, float threshold, size_t number_of_clusters){
     //TODO initialization and CUDAMallocs
+    printf("i live \n\n\n");
     float changed = number_of_examples;
     Datum* d_points;
     size_t* if_changed;
@@ -245,6 +246,5 @@ int main(int argc, char *argv[])
     runCPU(points, centroids, number_of_examples, threshold);
     runGPU(points, centroids, number_of_examples, threshold, number_of_clusters);
 
-    // runGpu();
     return 0;
 }
