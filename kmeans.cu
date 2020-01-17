@@ -86,7 +86,7 @@ void runCPU(Points points, Points centroids, size_t number_of_examples, float th
     
 }
 
-__device__ float square(float a) {
+__device__ float d_square(float a) {
     return a*a;
 }
 
