@@ -79,7 +79,7 @@ void runCPU(Points points, Points centroids, size_t number_of_examples, size_t n
     auto end = std::chrono::system_clock::now();
     printf("\n");
     for (auto i: result)
-        std::cout << i.x << ' ' << i.y << ' ' << i.z << endl;
+        std::cout << i.x << ' ' << i.y << ' ' << i.z << "\n";
     printf("\n");
 
     float duration = 1000.0*std::chrono::duration<float>(end - start).count();
