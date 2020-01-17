@@ -125,7 +125,7 @@ __global__ void distances_calculation(Datum* d_points, Datum* d_centroids, Datum
 
       // Slow but simple.
     if(tid == 0) {
-    float ax = new_centroids[currentCentroid].x;
+    Datum ax = new_centroids[currentCentroid];
     // atomicAdd(&new_centroids[currentCentroid].x, _x);
     // atomicAdd(&new_centroids[currentCentroid].y, _y);
     // atomicAdd(&new_centroids[currentCentroid].z, _z);
