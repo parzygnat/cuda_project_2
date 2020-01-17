@@ -96,6 +96,7 @@ __global__ void distances_calculation(Datum* d_points, Datum* d_centroids, Datum
     if (tid >= number_of_examples) return;
     size_t local_tid = blockIdx.x;
     extern __shared__ Datum local_centroids[];
+    __shared__ int 
     //coalesced read
     float _distance;
     float _x = d_points[tid].x;
@@ -115,13 +116,10 @@ __global__ void distances_calculation(Datum* d_points, Datum* d_centroids, Datum
         }
     }
 
-    if_changed[tid] = 0;
     if(assignments[tid] != currentCentroid) {
-        if_changed[tid] = 1;
+        changed[tid] = 1;
         assignments[tid] = currentCentroid;
     }
-
-    printf("im tid %d\n", tid);
 
       // Slow but simple.
     atomicAdd(&new_centroids[currentCentroid].x, _x);
@@ -129,6 +127,19 @@ __global__ void distances_calculation(Datum* d_points, Datum* d_centroids, Datum
     atomicAdd(&new_centroids[currentCentroid].z, _z);
     atomicAdd(&counters[currentCentroid], 1);
 
+    __syncthreads(); 
+
+    offset = 1;
+    for (int d = n>>1; d > 0; d >>=1) {
+        __syncthreads(); 
+        if(local_tid < d) {
+            int ai = offset*(2*local_tid+1)-1;
+            int bi = offset*(2*local_tid+2)-1;
+            //if(level == 1 && (prefixSum[ai] != 0 || prefixSum[bi] != 0)) printf("tid is %d ai is %d and bi is %d VALUE IS a: %d b: %d\n", tid, ai, bi, prefixSum[ai], prefixSum[bi]);
+            prefixSum[bi] += prefixSum[ai];
+        }
+        offset *= 2;
+    }
 }
 
 void runGPU(Points points, Points centroids, size_t number_of_examples, float threshold, size_t number_of_clusters){
