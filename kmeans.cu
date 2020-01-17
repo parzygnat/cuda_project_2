@@ -34,9 +34,11 @@ double squared_distance(Datum a, Datum b) {
     return square(a.x - b.x) + square(a.y - b.y) + square(a.z - b.z);
 }
 
-Points kmeansCPU(const Points& points, Points centroids, size_t number_of_examples, size_t number_of_iterations) {
+Points kmeansCPU(const Points& points, Points centroids, size_t number_of_examples, double threshold) {
     std::vector<size_t> assignments(number_of_examples);
-    for(int i = 0; i < number_of_iterations; ++i){
+    size_t changed = 0;
+    while(changed/number_of_examples > threshold){
+        changed = 0;
         //TODO assign each example to the nearest cluster
         for(int example = 0; example < number_of_examples - 1; ++example) {
             double currentDistance = std::numeric_limits<double>::max();
@@ -47,6 +49,7 @@ Points kmeansCPU(const Points& points, Points centroids, size_t number_of_exampl
                     currentCentroid = centroid;
                 }
             }
+            if(assignments[example] != currentCentroid) ++changed;
             assignments[example] = currentCentroid;
         }
         //TODO move clusters - calculate sums
@@ -71,11 +74,11 @@ Points kmeansCPU(const Points& points, Points centroids, size_t number_of_exampl
     return centroids;
     }
 
-void runCPU(Points points, Points centroids, size_t number_of_examples, size_t number_of_iterations)
+void runCPU(Points points, Points centroids, size_t number_of_examples, double threshold)
 {
     printf("Starting sequential kmeans\n");
     auto start = std::chrono::system_clock::now();
-    Points result = kmeansCPU(points, centroids, number_of_examples, number_of_iterations);
+    Points result = kmeansCPU(points, centroids, number_of_examples, threshold);
     auto end = std::chrono::system_clock::now();
     printf("\n");
     for (auto i: result)
@@ -91,13 +94,13 @@ int main(int argc, char *argv[])
 {
     if(argc < 2)
     { 
-        printf("Not enough arguments\n 1st argument -> number of examples to generate divisible by 8\n 2nd argument -> maximal absolute value on grid \n 3rd argument -> number of iterations of the k-means algorithm\n\n");
+        printf("Not enough arguments\n 1st argument -> number of examples to generate divisible by 8\n 2nd argument -> maximal absolute value on grid \n 3rd argument -> 0-1 threshold for stopping iterating\n\n");
         return 0;
     }
     //default number of clusters = 8;
     size_t number_of_examples = atoi(argv[1]);
     double grid_max_value = atof(argv[2]);
-    size_t number_of_iterations = atoi(argv[3]);
+    double threshold = atof(argv[3]);
     if(number_of_examples%NUMBER_OF_CLUSTERS != 0) {
         printf("The number of examples has to be divisible by 8\n\n");
         return 0;
@@ -152,7 +155,10 @@ int main(int argc, char *argv[])
     // for(auto& Datum : points) {
     //     printf("x is %f y is %f and z is %f \n", Datum.x, Datum.y, Datum.z);
     // }
-    runCPU(points, centroids, number_of_examples, number_of_iterations);
+    
+    runCPU(points, centroids, number_of_examples, threshold);
+    runGPU(points, centroids, number_of_examples, threshold);
+
     // runGpu();
     return 0;
 }
