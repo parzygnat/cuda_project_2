@@ -121,6 +121,8 @@ __global__ void distances_calculation(Datum* d_points, Datum* d_centroids, Datum
         assignments[tid] = currentCentroid;
     }
 
+    printf("im tid %d\n", tid);
+
       // Slow but simple.
     // atomicAdd(&(new_centroids[currentCentroid].x), _x);
     // atomicAdd(&(new_centroids[currentCentroid].y), _y);
