@@ -54,9 +54,9 @@ Points kmeansCPU(const Points& points, Points centroids, size_t number_of_exampl
         //TODO move clusters - calculate sums
         Points new_centroids(NUMBER_OF_CLUSTERS);
         for(int assignment = 0; assignment < assignments.size() - 1; ++assignment) {
-            new_centroidsp[assignment].x += points[i].x;
-            new_centroidsp[assignment].y += points[i].y;
-            new_centroidsp[assignment].z += points[i].z;
+            new_centroids[assignment].x += points[i].x;
+            new_centroids[assignment].y += points[i].y;
+            new_centroids[assignment].z += points[i].z;
         }
         //TODO move clusters - divide them by number of examples in each clusters
         for(int centroid = 0; centroid < NUMBER_OF_CLUSTERS; ++centroid) {
