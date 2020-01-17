@@ -4,6 +4,7 @@
 #include <limits>
 #include <random>
 #include <vector>
+#include <float.h>
 #include <chrono>
 #define NUMBER_OF_CLUSTERS 8
 
