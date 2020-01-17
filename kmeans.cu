@@ -97,7 +97,7 @@ __global__ void distance_calculation(Datum* d_points, Datum* d_centroids, Datum*
     size_t tid = blockIdx.x * blockDim.x + threadIdx.x;
     if (tid >= number_of_examples) return;
     size_t local_tid = blockIdx.x;
-    __shared__ Datum* local_centroids[number_of_clusters];
+    extern __shared__ Datum* local_centroids;
     //coalesced read
     float _distance;
     float _x = d_points[tid].x;
@@ -106,7 +106,7 @@ __global__ void distance_calculation(Datum* d_points, Datum* d_centroids, Datum*
 
     float currentDistance = FLT_MAX;
     float currentCentroid = 0;
-    if(tid < number_of_clusters) {
+    if(local_tid < number_of_clusters) {
         local_centroids[tid]= centroids[tid];
     }
     for(int i = 0; i < number_of_clusters; ++i) {
@@ -161,9 +161,10 @@ void runGPU(Points points, Points centroids, size_t number_of_examples, float th
     }
     int num_threads = 1024;
     int num_blocks = (number_of_examples + num_threads - 1) / num_threads;
+    int mem = number_of_clusters*sizeof(Datum);
     //while(changed/number_of_examples > threshold) {
         changed = 0;
-        distances_calculation<<<num_threads, num_blocks>>>(d_points, d_centroids, new_centroids, counters, assignments, number_of_examples, number_of_clusters, if_changed);
+        distances_calculation<<<num_threads, num_blocks, mem>>>(d_points, d_centroids, new_centroids, counters, assignments, number_of_examples, number_of_clusters, if_changed);
         gpuErrchk( cudaPeekAtLastError() );
         gpuErrchk( cudaDeviceSynchronize() );
         // move_centroids<<<1, number_of_clusters>>>>();
