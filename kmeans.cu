@@ -1,7 +1,4 @@
 #include <algorithm>
-#include <thrust/reduce.h>
-#include <thrust/execution_policy.h>
-#include <thrust/device_ptr.h>
 #include <cstdlib>
 #include <iostream>
 #include <limits>
@@ -133,7 +130,6 @@ __global__ void distances_calculation(Datum* d_points, Datum* d_centroids, Datum
 
 void runGPU(Points points, Points centroids, size_t number_of_examples, float threshold, size_t number_of_clusters){
     //TODO initialization and CUDAMallocs
-    thrust::device_ptr<float> cptr;
     float changed = number_of_examples;
     Datum* d_points;
     size_t* if_changed;
@@ -148,7 +144,6 @@ void runGPU(Points points, Points centroids, size_t number_of_examples, float th
     cudaMallocManaged(&new_centroids, centroids.size()*sizeof(Datum));
     cudaMallocManaged(&counters, centroids.size()*sizeof(size_t));
     cudaMallocManaged(&assignments, points.size()*sizeof(size_t));
-    thrust::device_ptr<int> indices(if_changed);
     for(int i = 0; i < number_of_examples; ++i) {
         d_points[i] = points[i];
     }
@@ -166,9 +161,6 @@ void runGPU(Points points, Points centroids, size_t number_of_examples, float th
         // move_centroids<<<1, number_of_clusters>>>>();
         // gpuErrchk( cudaPeekAtLastError() );
         // gpuErrchk( cudaDeviceSynchronize() );
-        changed = thrust::reduce(indices, indices + number_of_examples, 0);
-        gpuErrchk( cudaPeekAtLastError() );
-        gpuErrchk( cudaDeviceSynchronize() );
 
     //}
 
