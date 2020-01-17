@@ -35,8 +35,9 @@ double squared_distance(Datum a, Datum b) {
 }
 
 Points kmeansCPU(const Points& points, Points centroids, size_t number_of_examples, size_t number_of_iterations) {
-    std::vector<size_t> assignments(points.size());
+    std::vector<size_t> assignments(number_of_examples);
     for(int i = 0; i < number_of_iterations; ++i){
+        std::vector<size_t> counter(NUMBER_OF_CLUSTERS);
         //TODO assign each example to the nearest cluster
         for(int example = 0; example < number_of_examples - 1; ++example) {
             double currentDistance = std::numeric_limits<double>::max();
@@ -48,23 +49,38 @@ Points kmeansCPU(const Points& points, Points centroids, size_t number_of_exampl
                 }
             }
             assignments[example] = currentCentroid;
+            ++counter[currentCentroid];
         }
         //TODO move clusters - calculate sums
-
+        Points new_centroids(NUMBER_OF_CLUSTERS);
+        for(int assignment = 0; assignment < assignments.size() - 1; ++assignment) {
+            new_centroidsp[assignment].x += points[i].x;
+            new_centroidsp[assignment].y += points[i].y;
+            new_centroidsp[assignment].z += points[i].z;
+        }
         //TODO move clusters - divide them by number of examples in each clusters
-
-        //TODO return means
+        for(int centroid = 0; centroid < NUMBER_OF_CLUSTERS; ++centroid) {
+            centroids[i].x = new_centroids[i].x/counter[i];
+            centroids[i].y = new_centroids[i].y/counter[i];
+            centroids[i].z = new_centroids[i].z/counter[i];
+        }
+        
     }
+    //TODO return means
     return centroids;
-
     }
 
 void runCPU(Points points, Points centroids, size_t number_of_examples, size_t number_of_iterations)
 {
     printf("Starting sequential kmeans\n");
     auto start = std::chrono::system_clock::now();
-    kmeansCPU(points, centroids, number_of_examples, number_of_iterations);
+    Points result = kmeansCPU(points, centroids, number_of_examples, number_of_iterations);
     auto end = std::chrono::system_clock::now();
+    printf("\n");
+    for (auto i: result)
+        std::cout << i << ' ';
+    printf("\n");
+
     float duration = 1000.0*std::chrono::duration<float>(end - start).count();
     printf("\nElapsed time in milliseconds : %f ms.\n\n", duration);
     
