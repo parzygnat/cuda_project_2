@@ -157,7 +157,7 @@ int main(int argc, char *argv[])
     // }
     
     runCPU(points, centroids, number_of_examples, threshold);
-    runGPU(points, centroids, number_of_examples, threshold);
+    //runGPU(points, centroids, number_of_examples, threshold);
 
     // runGpu();
     return 0;
