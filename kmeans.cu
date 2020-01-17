@@ -103,7 +103,7 @@ __global__ void distances_calculation(Datum* d_points, Datum* d_centroids, Datum
     float _z = d_points[tid].z;
 
     float currentDistance = FLT_MAX;
-    float currentCentroid = 0;
+    size_t currentCentroid = 0;
     if(local_tid < number_of_clusters) {
         local_centroids[tid]= d_centroids[tid];
     }
