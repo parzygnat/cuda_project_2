@@ -7,30 +7,40 @@
 #include <chrono>
 #define NUMBER_OF_CLUSTERS 8
 
+#define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
+{
+   if (code != cudaSuccess) 
+   {
+      fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+      if (abort) exit(code);
+   }
+}
+
 struct Datum {
-    double x{0};
-    double y{0};
-    double z{0};
+    float x{0};
+    float y{0};
+    float z{0};
 };
 
 using Points = std::vector<Datum>;
 
-double square(double a) {
+float square(float a) {
     return a*a;
 }
 
-double squared_distance(Datum a, Datum b) {
+float squared_distance(Datum a, Datum b) {
     return square(a.x - b.x) + square(a.y - b.y) + square(a.z - b.z);
 }
 
-Points kmeansCPU(const Points& points, Points centroids, size_t number_of_examples, double threshold) {
+Points kmeansCPU(const Points& points, Points centroids, size_t number_of_examples, float threshold) {
     std::vector<size_t> assignments(number_of_examples);
-    double changed = number_of_examples;
+    float changed = number_of_examples;
     while(changed/number_of_examples > threshold){
         //printf("changed is %f\n", changed);
         changed = 0;
         for(int example = 0; example < number_of_examples - 1; ++example) {
-            double currentDistance = std::numeric_limits<double>::max();
+            float currentDistance = std::numeric_limits<float>::max();
             size_t currentCentroid = 0;
             for(int centroid = 0; centroid < NUMBER_OF_CLUSTERS - 1; ++centroid) {
                 if(squared_distance(points[example], centroids[centroid]) < currentDistance){
@@ -60,7 +70,7 @@ Points kmeansCPU(const Points& points, Points centroids, size_t number_of_exampl
     return centroids;
     }
 
-void runCPU(Points points, Points centroids, size_t number_of_examples, double threshold)
+void runCPU(Points points, Points centroids, size_t number_of_examples, float threshold)
 {
     printf("Starting sequential kmeans\n");
     auto start = std::chrono::system_clock::now();
@@ -76,6 +86,16 @@ void runCPU(Points points, Points centroids, size_t number_of_examples, double t
     
 }
 
+__device__ float square(float a) {
+    return a*a;
+}
+
+void runGPU(Points points, Points centroids, size_t number_of_examples, float threshold){
+    //TODO initialization and CUDAMallocs
+    //TODO AoS to SoA
+    //TODO cudaFree
+}
+
 int main(int argc, char *argv[])
 {
     if(argc < 2)
@@ -85,8 +105,8 @@ int main(int argc, char *argv[])
     }
     //default number of clusters = 8;
     size_t number_of_examples = atoi(argv[1]);
-    double grid_max_value = atof(argv[2]);
-    double threshold = atof(argv[3]);
+    float grid_max_value = atof(argv[2]);
+    float threshold = atof(argv[3]);
     if(number_of_examples%NUMBER_OF_CLUSTERS != 0) {
         printf("The number of examples has to be divisible by 8\n\n");
         return 0;
@@ -94,8 +114,8 @@ int main(int argc, char *argv[])
     Points points(number_of_examples);
     static std::random_device seed;
     static std::mt19937 random_number_generator(seed());
-    std::uniform_real_distribution<double> indices_upper(grid_max_value*0.5, grid_max_value);
-    std::uniform_real_distribution<double> indices_lower(-grid_max_value, -grid_max_value*0.5);
+    std::uniform_real_distribution<float> indices_upper(grid_max_value*0.5, grid_max_value);
+    std::uniform_real_distribution<float> indices_lower(-grid_max_value, -grid_max_value*0.5);
 
     for(int i = 0; i < number_of_examples; ++i) {
         if(i < number_of_examples / NUMBER_OF_CLUSTERS){
@@ -133,7 +153,7 @@ int main(int argc, char *argv[])
         }
     }
     Points centroids(NUMBER_OF_CLUSTERS);
-    std::uniform_real_distribution<double> indices(0, number_of_examples - 1);
+    std::uniform_real_distribution<float> indices(0, number_of_examples - 1);
     for(auto& centroid : centroids) {
         centroid = points[indices(random_number_generator)];
     }
