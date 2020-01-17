@@ -59,12 +59,12 @@ Points kmeansCPU(const Points& points, Points centroids, size_t number_of_exampl
             new_centroids[assignment].z += points[i].z;
         }
         //TODO move clusters - divide them by number of examples in each clusters
-        for(int centroid = 0; centroid < NUMBER_OF_CLUSTERS; ++centroid) {
-            const auto count = std::max<size_t>(1, counter[centroid]);
-            centroids[centroid].x = new_centroids[centroid].x/count;
-            centroids[centroid].y = new_centroids[centroid].y/count;
-            centroids[centroid].z = new_centroids[centroid].z/count;
-        }
+        // for(int centroid = 0; centroid < NUMBER_OF_CLUSTERS; ++centroid) {
+        //     const auto count = std::max<size_t>(1, counter[centroid]);
+        //     centroids[centroid].x = new_centroids[centroid].x/count;
+        //     centroids[centroid].y = new_centroids[centroid].y/count;
+        //     centroids[centroid].z = new_centroids[centroid].z/count;
+        // }
         
     }
     //TODO return means
