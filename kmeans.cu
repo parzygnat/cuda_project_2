@@ -127,7 +127,7 @@ __global__ void distances_calculation(Datum* d_points, Datum* d_centroids, Datum
     atomicAdd(&new_centroids[currentCentroid].x, _x);
     atomicAdd(&new_centroids[currentCentroid].y, _y);
     atomicAdd(&new_centroids[currentCentroid].z, _z);
-    atomicAdd(&counters[currentCentroid], 1);
+    atomicAdd(&counters[currentCentroid], (size_t)1);
 
 }
 
