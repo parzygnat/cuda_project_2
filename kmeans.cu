@@ -36,7 +36,7 @@ double squared_distance(Datum a, Datum b) {
 
 Points kmeansCPU(const Points& points, Points centroids, size_t number_of_examples, double threshold) {
     std::vector<size_t> assignments(number_of_examples);
-    size_t changed = 0;
+    double changed = 0;
     while(changed/number_of_examples > threshold){
         changed = 0;
         //TODO assign each example to the nearest cluster
