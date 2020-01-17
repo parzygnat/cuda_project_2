@@ -37,7 +37,6 @@ double squared_distance(Datum a, Datum b) {
 Points kmeansCPU(const Points& points, Points centroids, size_t number_of_examples, size_t number_of_iterations) {
     std::vector<size_t> assignments(number_of_examples);
     for(int i = 0; i < number_of_iterations; ++i){
-        std::vector<size_t> counter(NUMBER_OF_CLUSTERS, 0);
         //TODO assign each example to the nearest cluster
         for(int example = 0; example < number_of_examples - 1; ++example) {
             double currentDistance = std::numeric_limits<double>::max();
@@ -49,22 +48,23 @@ Points kmeansCPU(const Points& points, Points centroids, size_t number_of_exampl
                 }
             }
             assignments[example] = currentCentroid;
-            ++counter[currentCentroid];
         }
         //TODO move clusters - calculate sums
+        std::vector<size_t> counter(NUMBER_OF_CLUSTERS, 0);
         Points new_centroids(NUMBER_OF_CLUSTERS);
         for(int assignment = 0; assignment < assignments.size() - 1; ++assignment) {
             new_centroids[assignment].x += points[i].x;
             new_centroids[assignment].y += points[i].y;
             new_centroids[assignment].z += points[i].z;
+            counter[assignment] = counter[assignment] + 1;
         }
         //TODO move clusters - divide them by number of examples in each clusters
-        // for(int centroid = 0; centroid < NUMBER_OF_CLUSTERS; ++centroid) {
-        //     const auto count = std::max<size_t>(1, counter[centroid]);
-        //     centroids[centroid].x = new_centroids[centroid].x/count;
-        //     centroids[centroid].y = new_centroids[centroid].y/count;
-        //     centroids[centroid].z = new_centroids[centroid].z/count;
-        // }
+        for(int centroid = 0; centroid < NUMBER_OF_CLUSTERS; ++centroid) {
+            const auto count = std::max<size_t>(1, counter[centroid]);
+            centroids[centroid].x = new_centroids[centroid].x/count;
+            centroids[centroid].y = new_centroids[centroid].y/count;
+            centroids[centroid].z = new_centroids[centroid].z/count;
+        }
         
     }
     //TODO return means
