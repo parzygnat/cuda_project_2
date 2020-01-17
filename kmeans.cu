@@ -93,7 +93,7 @@ __device__ float distance_squared(float x1, float x2, float y1, float y2, float 
     return (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) + (z1-z2)*(z1-z2);
 }
 
-__global__ void distance_calculation(Datum* d_points, Datum* d_centroids, Datum* new_centroids, size_t* counters, size_t* assignments, size_t* number_of_examples, size_t* number_of_clusters, size_t* if_changed) {
+__global__ void distance_calculation(Datum* d_points, Datum* d_centroids, Datum* new_centroids, size_t* counters, size_t* assignments, size_t number_of_examples, size_t number_of_clusters, size_t* if_changed) {
     size_t tid = blockIdx.x * blockDim.x + threadIdx.x;
     if (tid >= number_of_examples) return;
     size_t local_tid = blockIdx.x;
