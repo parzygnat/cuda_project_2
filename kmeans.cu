@@ -91,7 +91,7 @@ __device__ float distance_squared(float x1, float x2, float y1, float y2, float 
     return (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) + (z1-z2)*(z1-z2);
 }
 
-__global__ void distances_calculation(Datum* d_points, Datum* d_centroids, Datum* new_centroids, size_t* counters, size_t* assignments, size_t number_of_examples, size_t number_of_clusters, size_t* if_changed) {
+__global__ void distances_calculation(Datum* d_points, Datum* d_centroids, Datum* new_centroids, int* counters, size_t* assignments, size_t number_of_examples, size_t number_of_clusters, size_t* if_changed) {
     size_t tid = blockIdx.x * blockDim.x + threadIdx.x;
     if (tid >= number_of_examples) return;
     size_t local_tid = blockIdx.x;
@@ -127,7 +127,7 @@ __global__ void distances_calculation(Datum* d_points, Datum* d_centroids, Datum
     atomicAdd(&new_centroids[currentCentroid].x, _x);
     atomicAdd(&new_centroids[currentCentroid].y, _y);
     atomicAdd(&new_centroids[currentCentroid].z, _z);
-    atomicAdd(&counters[currentCentroid], (size_t)1);
+    atomicAdd(&counters[currentCentroid], 1);
 
 }
 
@@ -138,7 +138,7 @@ void runGPU(Points points, Points centroids, size_t number_of_examples, float th
     size_t* if_changed;
     Datum* d_centroids;
     Datum* new_centroids;
-    size_t* counters;
+    int* counters;
     size_t* assignments;
     //we will be accessing memory structures concurrently -> AoS makes more sense than SoA
     cudaMallocManaged(&if_changed, points.size()*sizeof(size_t));
