@@ -1,4 +1,7 @@
 #include <algorithm>
+#include <thrust/reduce.h>
+#include <thrust/execution_policy.h>
+#include <thrust/device_ptr.h>
 #include <cstdlib>
 #include <iostream>
 #include <limits>
@@ -86,14 +89,98 @@ void runCPU(Points points, Points centroids, size_t number_of_examples, float th
     
 }
 
-__device__ float d_square(float a) {
-    return a*a;
+__device__ float distance_squared(float x1, float x2, float y1, float y2, float z1, float z2) {
+    return (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) + (z1-z2)*(z1-z2);
 }
 
-void runGPU(Points points, Points centroids, size_t number_of_examples, float threshold){
+__global__ void distance_calculation(Datum* d_points, Datum* d_centroids, Datum* new_centroids, size_t* counters, size_t* assignments, size_t* number_of_examples, size_t* number_of_clusters, size_t* if_changed) {
+    size_t tid = blockIdx.x * blockDim.x + threadIdx.x;
+    if (tid >= number_of_examples) return;
+    size_t local_tid = blockIdx.x;
+    __shared__ Datum* local_centroids[number_of_clusters];
+    //coalesced read
+    float _distance;
+    float _x = d_points[tid].x;
+    float _y = d_points[tid].y;
+    float _z = d_points[tid].z;
+
+    float currentDistance = FLT_MAX;
+    float currentCentroid = 0;
+    if(tid < number_of_clusters) {
+        local_centroids[tid]= centroids[tid];
+    }
+    for(int i = 0; i < number_of_clusters; ++i) {
+        _distance = distance_squared(_x, local_centroids[i].x, _y,local_centroids[i].y , _z, local_centroids[i].z);
+        if(_distance < currentDistance) {
+            currentCentroid = i;
+            currentDistance = _distance;
+        }
+    }
+
+    if_changed[tid] = 0;
+    if(assignments[tid] != currentCentroid) {
+        if_changed[tid] = 1;
+        assignments[tid] = currentCentroid;
+    }
+
+      // Slow but simple.
+    atomicAdd(&new_sums_x[currentCentroid], _x);
+    atomicAdd(&new_sums_y[currentCentroid], _y);
+    atomicAdd(&new_sums_z[currentCentroid], _z);
+    atomicAdd(&counters[currentCentroid], 1);
+
+}
+
+void runGPU(Points points, Points centroids, size_t number_of_examples, float threshold, size_t number_of_clusters){
     //TODO initialization and CUDAMallocs
-    //TODO AoS to SoA
+    thrust::device_ptr<float> cptr;
+    float changed = number_of_examples;
+    Datum* d_points;
+    size_t* if_changed;
+    Datum* d_centroids;
+    Datum* new_centroids;
+    size_t* counters;
+    size_t* assignments;
+    //we will be accessing memory structures concurrently -> AoS makes more sense than SoA
+    cudaMallocManaged(&if_changed, points.size()*sizeof(size_t));
+    cudaMallocManaged(&d_points, points.size()*sizeof(Datum));
+    cudaMallocManaged(&d_centroids, centroids.size()*sizeof(Datum));
+    cudaMallocManaged(&new_centroids, centroids.size()*sizeof(Datum));
+    cudaMallocManaged(&counters, centroids.size()*sizeof(size_t));
+    cudaMallocManaged(&assignments, points.size()*sizeof(size_t));
+    thrust::device_ptr<int> indices(if_changed);
+    for(int i = 0; i < number_of_examples; ++i) {
+        d_points[i].x = points[i].x;
+        d_points[i].y = points[i].y;
+        d_points[i].z = points[i].z;
+    }
+    for(int i = 0; i < number_of_clusters; ++i) {
+        d_centroids[i].x = centroids[i].x;
+        d_centroids[i].y = centroids[i].y;
+        d_centroids[i].z = centroids[i].z;
+    }
+    int num_threads = 1024;
+    int num_blocks = (number_of_examples + num_threads - 1) / num_threads;
+    //while(changed/number_of_examples > threshold) {
+        changed = 0;
+        distances_calculation<<<num_threads, num_blocks>>>(d_points, d_centroids, new_centroids, counters, assignments, number_of_examples, number_of_clusters, if_changed);
+        gpuErrchk( cudaPeekAtLastError() );
+        gpuErrchk( cudaDeviceSynchronize() );
+        // move_centroids<<<1, number_of_clusters>>>>();
+        // gpuErrchk( cudaPeekAtLastError() );
+        // gpuErrchk( cudaDeviceSynchronize() );
+        changed = thrust::reduce(indices, indices + number_of_examples, 0);
+        gpuErrchk( cudaPeekAtLastError() );
+        gpuErrchk( cudaDeviceSynchronize() );
+
+    //}
+
     //TODO cudaFree
+    cudaFree(d_points);
+    cudaFree(d_centroids);
+    cudaFree(new_centroids);
+    cudaFree(counters);
+
 }
 
 int main(int argc, char *argv[])
@@ -107,7 +194,8 @@ int main(int argc, char *argv[])
     size_t number_of_examples = atoi(argv[1]);
     float grid_max_value = atof(argv[2]);
     float threshold = atof(argv[3]);
-    if(number_of_examples%NUMBER_OF_CLUSTERS != 0) {
+    size_t number_of_clusters = NUMBER_OF_CLUSTERS;
+    if(number_of_examples%number_of_clusters != 0) {
         printf("The number of examples has to be divisible by 8\n\n");
         return 0;
     }
@@ -118,31 +206,31 @@ int main(int argc, char *argv[])
     std::uniform_real_distribution<float> indices_lower(-grid_max_value, -grid_max_value*0.5);
 
     for(int i = 0; i < number_of_examples; ++i) {
-        if(i < number_of_examples / NUMBER_OF_CLUSTERS){
+        if(i < number_of_examples / number_of_clusters){
         points[i].x = indices_lower(random_number_generator);
         points[i].y = indices_upper(random_number_generator);
         points[i].z = indices_upper(random_number_generator);
-        } else if(i < 2*number_of_examples/NUMBER_OF_CLUSTERS) {
+        } else if(i < 2*number_of_examples/number_of_clusters) {
         points[i].x = indices_lower(random_number_generator);
         points[i].y = indices_upper(random_number_generator);
         points[i].z = indices_lower(random_number_generator);
-        } else if(i < 3*number_of_examples/NUMBER_OF_CLUSTERS) {
+        } else if(i < 3*number_of_examples/number_of_clusters) {
         points[i].x = indices_upper(random_number_generator);
         points[i].y = indices_upper(random_number_generator);
         points[i].z = indices_lower(random_number_generator);
-        } else if(i < 4*number_of_examples/NUMBER_OF_CLUSTERS) {
+        } else if(i < 4*number_of_examples/number_of_clusters) {
         points[i].x = indices_upper(random_number_generator);
         points[i].y = indices_upper(random_number_generator);
         points[i].z = indices_upper(random_number_generator);
-        } else if(i < 5*number_of_examples/NUMBER_OF_CLUSTERS) {
+        } else if(i < 5*number_of_examples/number_of_clusters) {
         points[i].x = indices_upper(random_number_generator);
         points[i].y = indices_lower(random_number_generator);
         points[i].z = indices_upper(random_number_generator);
-        } else if(i < 6*number_of_examples/NUMBER_OF_CLUSTERS) {
+        } else if(i < 6*number_of_examples/number_of_clusters) {
         points[i].x = indices_upper(random_number_generator);
         points[i].y = indices_lower(random_number_generator);
         points[i].z = indices_lower(random_number_generator);
-        } else if(i < 7*number_of_examples/NUMBER_OF_CLUSTERS) {
+        } else if(i < 7*number_of_examples/number_of_clusters) {
         points[i].x = indices_lower(random_number_generator);
         points[i].y = indices_lower(random_number_generator);
         points[i].z = indices_lower(random_number_generator);
@@ -152,7 +240,7 @@ int main(int argc, char *argv[])
         points[i].z = indices_upper(random_number_generator);
         }
     }
-    Points centroids(NUMBER_OF_CLUSTERS);
+    Points centroids(number_of_clusters);
     std::uniform_real_distribution<float> indices(0, number_of_examples - 1);
     for(auto& centroid : centroids) {
         centroid = points[indices(random_number_generator)];
@@ -163,7 +251,7 @@ int main(int argc, char *argv[])
     // }
     
     runCPU(points, centroids, number_of_examples, threshold);
-    //runGPU(points, centroids, number_of_examples, threshold);
+    runGPU(points, centroids, number_of_examples, threshold, number_of_clusters);
 
     // runGpu();
     return 0;
