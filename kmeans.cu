@@ -111,9 +111,9 @@ __global__ void distances_calculation(float* d_points_x, float* d_points_y, floa
     float currentDistance = FLT_MAX;
 
     if(local_tid < number_of_clusters) {
-        local_centroids[local_tid]= d_centroids_x[tid];
-        local_centroids[local_tid + number_of_clusters]= d_centroids_y[tid];
-        local_centroids[local_tid + number_of_clusters*2]= d_centroids_z[tid];
+        local_centroids[local_tid]= d_centroids_x[local_tid];
+        local_centroids[local_tid + number_of_clusters]= d_centroids_y[local_tid];
+        local_centroids[local_tid + number_of_clusters + number_of_clusters]= d_centroids_z[local_tid];
     }
     __syncthreads();
     for(int i = 0; i < number_of_clusters; ++i) {
