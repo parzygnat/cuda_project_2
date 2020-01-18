@@ -134,7 +134,6 @@ void runGPU(Points points, Points centroids, int iterations, int number_of_examp
     Datum* d_centroids;
     Datum* new_centroids;
     int* counters;
-    int* assignments;
     //we will be accessing memory structures concurrently -> AoS makes more sense than SoA
     cudaMallocManaged(&d_points, points.size()*sizeof(Datum));
     cudaMallocManaged(&d_centroids, centroids.size()*sizeof(Datum));
