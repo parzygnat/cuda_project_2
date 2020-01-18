@@ -47,6 +47,10 @@ Points kmeansCPU(const Points& points, Points centroids, int number_of_examples,
             }
             assignments[example] = currentCentroid;
         }
+        for(auto i:assignments) {
+            printf(" %d ", i);
+        }
+        printf("\n");
         std::vector<int> counter(number_of_clusters, 0);
         Points new_centroids(number_of_clusters);
         for(int assignment = 0; assignment < assignments.size() - 1; ++assignment) {
@@ -110,15 +114,12 @@ __global__ void distances_calculation(float* d_points_x, float* d_points_y, floa
     float _z = d_points_z[tid];
     float currentDistance = FLT_MAX;
 
-    if(threadIdx.x < number_of_clusters) {
+    if(local_tid < number_of_clusters) {
         local_centroids[local_tid]= d_centroids_x[local_tid];
         local_centroids[local_tid + number_of_clusters]= d_centroids_y[local_tid];
         local_centroids[local_tid + number_of_clusters + number_of_clusters]= d_centroids_z[local_tid];
-        printf("im here %d %d\n", local_tid, number_of_clusters);
     }
     __syncthreads();
-    if(local_tid < number_of_clusters && local_centroids[local_tid] != d_centroids_x[local_tid])
-        printf("NIE DZIALA\n");
     for(int i = 0; i < number_of_clusters; ++i) {
         const float _distance = distance_squared(_x, local_centroids[i], _y,local_centroids[i + number_of_clusters] , _z, local_centroids[i + 2*number_of_clusters]);
         if(_distance < currentDistance) {
