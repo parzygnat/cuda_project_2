@@ -34,7 +34,6 @@ float squared_distance(Datum a, Datum b) {
 }
 
 Points kmeansCPU(const Points& points, Points centroids, int number_of_examples, int iterations, int number_of_clusters) {
-    Points _centroids(centroids);
     std::vector<int> assignments(number_of_examples);
     for(int i = 0; i < iterations; ++i){
         for(int example = 0; example < number_of_examples - 1; ++example) {
@@ -58,13 +57,13 @@ Points kmeansCPU(const Points& points, Points centroids, int number_of_examples,
         }
         for(int centroid = 0; centroid < number_of_clusters - 1; ++centroid) {
             const auto count = std::max<int>(1, counter[centroid]);
-            _centroids[centroid].x = new_centroids[centroid].x/count;
-            _centroids[centroid].y = new_centroids[centroid].y/count;
-            _centroids[centroid].z = new_centroids[centroid].z/count;
+            centroids[centroid].x = new_centroids[centroid].x/count;
+            centroids[centroid].y = new_centroids[centroid].y/count;
+            centroids[centroid].z = new_centroids[centroid].z/count;
         }
         
     }
-    return _centroids;
+    return centroids;
     }
 
 void runCPU(Points points, Points centroids, int number_of_examples, int iterations, int number_of_clusters)
