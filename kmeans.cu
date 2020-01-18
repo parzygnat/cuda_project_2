@@ -73,9 +73,9 @@ void runCPU(Points points, Points centroids, int number_of_examples, int iterati
     Points result = kmeansCPU(points, centroids, number_of_examples, iterations, number_of_clusters);
     auto end = std::chrono::system_clock::now();
     printf("\n");
-    for (auto i: result)
-        std::cout << i.x << ' ' << i.y << ' ' << i.z << "\n";
-    printf("\n");
+    for (int i = 0; i < number_of_clusters; i++){
+        printf("%f  %f  %f", result[i].x, result[i].y, result[i].z);     printf("\n");}
+
 
     float duration = 1000.0*std::chrono::duration<float>(end - start).count();
     printf("\nElapsed time in milliseconds : %f ms.\n\n", duration);
