@@ -279,7 +279,7 @@ int main(int argc, char *argv[])
     for(auto& centroid : centroids) {
         centroid = points[indices(random_number_generator)];
     }
-    Datum PRINTING
+    //Datum PRINTING
     for(auto& Datum : points) {
         printf("x is %f y is %f and z is %f \n", Datum.x, Datum.y, Datum.z);
     }
