@@ -48,15 +48,15 @@ Points kmeansCPU(const Points& points, Points centroids, int number_of_examples,
             }
             assignments[example] = currentCentroid;
         }
-        std::vector<int> counter(NUMBER_OF_CLUSTERS, 0);
-        Points new_centroids(NUMBER_OF_CLUSTERS);
+        std::vector<int> counter(number_of_clusters, 0);
+        Points new_centroids(number_of_clusters);
         for(int assignment = 0; assignment < assignments.size() - 1; ++assignment) {
             new_centroids[assignments[assignment]].x += points[assignment].x;
             new_centroids[assignments[assignment]].y += points[assignment].y;
             new_centroids[assignments[assignment]].z += points[assignment].z;
             counter[assignments[assignment]] = counter[assignments[assignment]] + 1;
         }
-        for(int centroid = 0; centroid < NUMBER_OF_CLUSTERS - 1; ++centroid) {
+        for(int centroid = 0; centroid < number_of_clusters - 1; ++centroid) {
             const auto count = std::max<int>(1, counter[centroid]);
             _centroids[centroid].x = new_centroids[centroid].x/count;
             _centroids[centroid].y = new_centroids[centroid].y/count;
