@@ -35,6 +35,7 @@ float squared_distance(Datum a, Datum b) {
 }
 
 Points kmeansCPU(const Points& points, Points centroids, int number_of_examples, int iterations) {
+    Points _centroids(centroids);
     std::vector<int> assignments(number_of_examples);
     for(int i = 0; i < iterations; ++i){
         for(int example = 0; example < number_of_examples - 1; ++example) {
@@ -58,9 +59,9 @@ Points kmeansCPU(const Points& points, Points centroids, int number_of_examples,
         }
         for(int centroid = 0; centroid < NUMBER_OF_CLUSTERS - 1; ++centroid) {
             const auto count = std::max<int>(1, counter[centroid]);
-            centroids[centroid].x = new_centroids[centroid].x/count;
-            centroids[centroid].y = new_centroids[centroid].y/count;
-            centroids[centroid].z = new_centroids[centroid].z/count;
+            _centroids[centroid].x = new_centroids[centroid].x/count;
+            _centroids[centroid].y = new_centroids[centroid].y/count;
+            _centroids[centroid].z = new_centroids[centroid].z/count;
         }
         
     }
@@ -166,7 +167,6 @@ void runGPU(Points points, Points centroids, int iterations, int number_of_examp
     auto end = std::chrono::system_clock::now();
     float duration = 1000.0*std::chrono::duration<float>(end - start).count();
     printf("\nElapsed time in milliseconds : %f ms.\n\n", duration);
-    
     cudaFree(d_points);
     cudaFree(d_centroids);
     cudaFree(new_centroids);
