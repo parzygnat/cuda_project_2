@@ -158,7 +158,7 @@ void runGPU(Points points, Points centroids, int iterations, int number_of_examp
     int num_blocks = (number_of_examples + num_threads - 1) / num_threads;
     int mem = number_of_clusters*sizeof(Datum);
     for(int i = 0; i < iterations; ++i) {
-        distances_calculation<<<num_threads, num_blocks, mem>>>(d_points, d_centroids, new_centroids, counters, number_of_examples, number_of_clusters);
+        distances_calculation<<<num_threads, 10, mem>>>(d_points, d_centroids, new_centroids, counters, number_of_examples, number_of_clusters);
         gpuErrchk( cudaPeekAtLastError() );
         gpuErrchk( cudaDeviceSynchronize() );
         move_centroids<<<1, number_of_clusters>>>(d_centroids, new_centroids, counters, number_of_clusters);
