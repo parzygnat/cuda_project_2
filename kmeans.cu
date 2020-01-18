@@ -36,10 +36,10 @@ float squared_distance(Datum a, Datum b) {
 Points kmeansCPU(const Points& points, Points centroids, int number_of_examples, int iterations, int number_of_clusters) {
     std::vector<int> assignments(number_of_examples);
     for(int i = 0; i < iterations; ++i){
-        for(int example = 0; example < number_of_examples - 1; ++example) {
+        for(int example = 0; example < number_of_examples; ++example) {
             float currentDistance = FLT_MAX;
             int currentCentroid = 0;
-            for(int centroid = 0; centroid < number_of_clusters - 1; ++centroid) {
+            for(int centroid = 0; centroid < number_of_clusters; ++centroid) {
                 if(squared_distance(points[example], centroids[centroid]) < currentDistance){
                     currentDistance = squared_distance(points[example], centroids[centroid]);
                     currentCentroid = centroid;
@@ -53,13 +53,13 @@ Points kmeansCPU(const Points& points, Points centroids, int number_of_examples,
         printf("\n");
         std::vector<int> counter(number_of_clusters, 0);
         Points new_centroids(number_of_clusters);
-        for(int assignment = 0; assignment < assignments.size() - 1; ++assignment) {
+        for(int assignment = 0; assignment < assignments.size(); ++assignment) {
             new_centroids[assignments[assignment]].x += points[assignment].x;
             new_centroids[assignments[assignment]].y += points[assignment].y;
             new_centroids[assignments[assignment]].z += points[assignment].z;
             counter[assignments[assignment]] = counter[assignments[assignment]] + 1;
         }
-        for(int centroid = 0; centroid < number_of_clusters - 1; ++centroid) {
+        for(int centroid = 0; centroid < number_of_clusters; ++centroid) {
             const auto count = std::max<int>(1, counter[centroid]);
             centroids[centroid].x = new_centroids[centroid].x/count;
             centroids[centroid].y = new_centroids[centroid].y/count;
