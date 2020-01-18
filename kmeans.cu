@@ -6,7 +6,6 @@
 #include <vector>
 #include <float.h>
 #include <chrono>
-#define NUMBER_OF_CLUSTERS 8
 
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
@@ -181,61 +180,71 @@ void runGPU(Points points, Points centroids, int iterations, int number_of_examp
 
 int main(int argc, char *argv[])
 {
-    if(argc < 2)
+    if(argc < 5)
     { 
-        printf("Not enough arguments\n 1st argument -> number of examples to generate divisible by 8\n 2nd argument -> maximal absolute value on grid \n 3rd argument -> number of iterations\n\n");
+        printf("Not enough arguments\n 1st argument -> number of examples to generate divisible by 8\n 2nd argument -> maximal absolute value on grid \n 3rd argument -> number of iterations \n 4th argument -> number of clusters\n\n");
         return 0;
     }
     //default number of clusters = 8;
     int number_of_examples = atoi(argv[1]);
     float grid_max_value = atof(argv[2]);
     int iterations = atoi(argv[3]);
-    int number_of_clusters = NUMBER_OF_CLUSTERS;
-    if(number_of_examples%number_of_clusters != 0) {
-        printf("The number of examples has to be divisible by 8\n\n");
+    int number_of_clusters = atoi(argv[4]);
+    if(number_of_examples < number_of_clusters != 0) {
+        printf("The number of examples has to be smaller than number of clusters\n\n");
         return 0;
     }
     Points points(number_of_examples);
     static std::random_device seed;
     static std::mt19937 random_number_generator(seed());
-    std::uniform_real_distribution<float> indices_upper(grid_max_value*0.5, grid_max_value);
-    std::uniform_real_distribution<float> indices_lower(-grid_max_value, -grid_max_value*0.5);
 
-    for(int i = 0; i < number_of_examples; ++i) {
-        if(i < number_of_examples / number_of_clusters){
-        points[i].x = indices_lower(random_number_generator);
-        points[i].y = indices_upper(random_number_generator);
-        points[i].z = indices_upper(random_number_generator);
-        } else if(i < 2*number_of_examples/number_of_clusters) {
-        points[i].x = indices_lower(random_number_generator);
-        points[i].y = indices_upper(random_number_generator);
-        points[i].z = indices_lower(random_number_generator);
-        } else if(i < 3*number_of_examples/number_of_clusters) {
-        points[i].x = indices_upper(random_number_generator);
-        points[i].y = indices_upper(random_number_generator);
-        points[i].z = indices_lower(random_number_generator);
-        } else if(i < 4*number_of_examples/number_of_clusters) {
-        points[i].x = indices_upper(random_number_generator);
-        points[i].y = indices_upper(random_number_generator);
-        points[i].z = indices_upper(random_number_generator);
-        } else if(i < 5*number_of_examples/number_of_clusters) {
-        points[i].x = indices_upper(random_number_generator);
-        points[i].y = indices_lower(random_number_generator);
-        points[i].z = indices_upper(random_number_generator);
-        } else if(i < 6*number_of_examples/number_of_clusters) {
-        points[i].x = indices_upper(random_number_generator);
-        points[i].y = indices_lower(random_number_generator);
-        points[i].z = indices_lower(random_number_generator);
-        } else if(i < 7*number_of_examples/number_of_clusters) {
-        points[i].x = indices_lower(random_number_generator);
-        points[i].y = indices_lower(random_number_generator);
-        points[i].z = indices_lower(random_number_generator);
-        } else if(i < number_of_examples) {
-        points[i].x = indices_lower(random_number_generator);
-        points[i].y = indices_lower(random_number_generator);
-        points[i].z = indices_upper(random_number_generator);
-        }
+    {
+    //8 domain generation
+        // std::uniform_real_distribution<float> indices_upper(grid_max_value*0.5, grid_max_value);
+        // std::uniform_real_distribution<float> indices_lower(-grid_max_value, -grid_max_value*0.5);
+        // for(int i = 0; i < number_of_examples; ++i) {
+        //     if(i < number_of_examples / number_of_clusters){
+        //     points[i].x = indices_lower(random_number_generator);
+        //     points[i].y = indices_upper(random_number_generator);
+        //     points[i].z = indices_upper(random_number_generator);
+        //     } else if(i < 2*number_of_examples/number_of_clusters) {
+        //     points[i].x = indices_lower(random_number_generator);
+        //     points[i].y = indices_upper(random_number_generator);
+        //     points[i].z = indices_lower(random_number_generator);
+        //     } else if(i < 3*number_of_examples/number_of_clusters) {
+        //     points[i].x = indices_upper(random_number_generator);
+        //     points[i].y = indices_upper(random_number_generator);
+        //     points[i].z = indices_lower(random_number_generator);
+        //     } else if(i < 4*number_of_examples/number_of_clusters) {
+        //     points[i].x = indices_upper(random_number_generator);
+        //     points[i].y = indices_upper(random_number_generator);
+        //     points[i].z = indices_upper(random_number_generator);
+        //     } else if(i < 5*number_of_examples/number_of_clusters) {
+        //     points[i].x = indices_upper(random_number_generator);
+        //     points[i].y = indices_lower(random_number_generator);
+        //     points[i].z = indices_upper(random_number_generator);
+        //     } else if(i < 6*number_of_examples/number_of_clusters) {
+        //     points[i].x = indices_upper(random_number_generator);
+        //     points[i].y = indices_lower(random_number_generator);
+        //     points[i].z = indices_lower(random_number_generator);
+        //     } else if(i < 7*number_of_examples/number_of_clusters) {
+        //     points[i].x = indices_lower(random_number_generator);
+        //     points[i].y = indices_lower(random_number_generator);
+        //     points[i].z = indices_lower(random_number_generator);
+        //     } else if(i < number_of_examples) {
+        //     points[i].x = indices_lower(random_number_generator);
+        //     points[i].y = indices_lower(random_number_generator);
+        //     points[i].z = indices_upper(random_number_generator);
+        //     }
+        // }
     }
+    std::uniform_real_distribution<float> indices_general(-grid_max_value, grid_max_value);
+    for(int i = 0; i < number_of_examples; ++i) {
+         points[i].x = indices_general(random_number_generator);
+         points[i].y = indices_general(random_number_generator);
+         points[i].z = indices_general(random_number_generator);
+    }
+
     Points centroids(number_of_clusters);
     std::uniform_real_distribution<float> indices(0, number_of_examples - 1);
     for(auto& centroid : centroids) {
