@@ -92,10 +92,9 @@ __device__ float distance_squared(float x1, float x2, float y1, float y2, float 
 }
 __global__ void move_centroids(Datum* d_centroids, Datum* new_centroids, int* counters, int number_of_clusters) {
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
-    int local_tid = blockIdx.x;
     if(tid >= number_of_clusters) return;
     Datum _centroid = new_centroids[tid];
-    const int count = max(1, counters[cluster]);
+    const int count = max(1, counters[tid]);
     d_centroids[tid].x = _centroid.x/count;
     d_centroids[tid].y = _centroid.y/count;
     d_centroids[tid].z = _centroid.z/count;
@@ -103,7 +102,7 @@ __global__ void move_centroids(Datum* d_centroids, Datum* new_centroids, int* co
 
 __global__ void distances_calculation(Datum* d_points, Datum* d_centroids, Datum* new_centroids, int* counters, int number_of_examples, int number_of_clusters) {
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
-    int local_tid = blockIdx.x;
+    int local_tid = threadIdx.x;
     if(tid >= number_of_examples) return;
     extern __shared__ Datum local_centroids[];
     float currentDistance = FLT_MAX;
@@ -162,7 +161,7 @@ void runGPU(Points points, Points centroids, int iterations, int number_of_examp
         distances_calculation<<<num_threads, num_blocks, mem>>>(d_points, d_centroids, new_centroids, counters, number_of_examples, number_of_clusters);
         gpuErrchk( cudaPeekAtLastError() );
         gpuErrchk( cudaDeviceSynchronize() );
-        move_centroids<<<1, number_of_clusters>>>>(d_centroids, new_centroids, counters, number_of_clusters);
+        move_centroids<<<1, number_of_clusters>>>(d_centroids, new_centroids, counters, number_of_clusters);
         gpuErrchk( cudaPeekAtLastError() );
         gpuErrchk( cudaDeviceSynchronize() );
 
