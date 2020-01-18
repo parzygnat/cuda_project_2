@@ -88,8 +88,7 @@ __device__ float distance_squared(float x1, float x2, float y1, float y2, float 
 }
 __global__ void move_centroids(float* d_centroids_x, float* d_centroids_y, float* d_centroids_z, float* d_new_centroids_x, float* d_new_centroids_y, float* d_new_centroids_z, int* counters, int number_of_clusters) 
 {
-    int tid = blockIdx.x * blockDim.x + threadIdx.x;
-    if(tid >= number_of_clusters) return;
+    int tid = threadIdx.x;
     const int count = max(1, counters[tid]);
     d_centroids_x[tid] = d_new_centroids_x[tid]/count;
     d_centroids_y[tid] = d_new_centroids_y[tid]/count;
@@ -97,15 +96,14 @@ __global__ void move_centroids(float* d_centroids_x, float* d_centroids_y, float
     d_new_centroids_x[tid] = 0;
     d_new_centroids_y[tid] = 0;
     d_new_centroids_z[tid] = 0;
-    counters[tid] = 0;
 }
 
 __global__ void distances_calculation(float* d_points_x, float* d_points_y, float* d_points_z, float* d_centroids_x, float* d_centroids_y, float* d_centroids_z, float* d_new_centroids_x, float* d_new_centroids_y, float* d_new_centroids_z, int* counters, int number_of_examples, int number_of_clusters) 
 {
+    extern __shared__ float local_centroids[];
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
     int local_tid = threadIdx.x;
     if(tid >= number_of_examples) return;
-    extern __shared__ float local_centroids[];
     float currentDistance = FLT_MAX;
     int currentCentroid = 0;
     //coalesced read
@@ -118,6 +116,7 @@ __global__ void distances_calculation(float* d_points_x, float* d_points_y, floa
         local_centroids[local_tid + number_of_clusters]= d_centroids_y[tid];
         local_centroids[local_tid + number_of_clusters*2]= d_centroids_z[tid];
     }
+    __syncthreads();
     for(int i = 0; i < number_of_clusters; ++i) {
         _distance = distance_squared(_x, local_centroids[i], _y,local_centroids[i + number_of_clusters] , _z, local_centroids[i + 2*number_of_clusters]);
         if(_distance < currentDistance) {
@@ -178,6 +177,7 @@ void runGPU(Points points, Points centroids, int number_of_examples, int iterati
     printf("Starting parallel kmeans\n");
     auto start = std::chrono::system_clock::now();
     for(int i = 0; i < iterations; ++i) {
+        cudaMemset(counters, 0, number_of_clusters*sizeof(int));
         distances_calculation<<<num_threads, num_blocks, mem>>>(d_points_x, d_points_y, d_points_z, d_centroids_x, d_centroids_y, d_centroids_z, d_new_centroids_x, d_new_centroids_y, d_new_centroids_z, counters, number_of_examples, number_of_clusters);
         gpuErrchk( cudaPeekAtLastError() );
         gpuErrchk( cudaDeviceSynchronize() );
