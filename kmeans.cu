@@ -47,10 +47,10 @@ Points kmeansCPU(const Points& points, Points centroids, int number_of_examples,
             }
             assignments[example] = currentCentroid;
         }
-        for(auto i:assignments) {
-            printf(" %d ", i);
-        }
-        printf("\n");
+        // for(auto i:assignments) {
+        //     printf(" %d ", i);
+        // }
+        // printf("\n");
         std::vector<int> counter(number_of_clusters, 0);
         Points new_centroids(number_of_clusters);
         for(int assignment = 0; assignment < assignments.size(); ++assignment) {
@@ -129,7 +129,7 @@ __global__ void distances_calculation(float* d_points_x, float* d_points_y, floa
     }
 
     //Slow but simple.
-    printf("tid: %d im adding to %d values %f %f %f, number of clusters is %d\n", tid, currentCentroid, _x, _y, _z, number_of_clusters);
+    //printf("tid: %d im adding to %d values %f %f %f, number of clusters is %d\n", tid, currentCentroid, _x, _y, _z, number_of_clusters);
     atomicAdd(&d_new_centroids_x[currentCentroid], _x);
     atomicAdd(&d_new_centroids_y[currentCentroid], _y);
     atomicAdd(&d_new_centroids_z[currentCentroid], _z);
@@ -285,9 +285,9 @@ int main(int argc, char *argv[])
         centroid = points[indices(random_number_generator)];
     }
     //Datum PRINTING
-    for(auto& Datum : points) {
-        printf("x is %f y is %f and z is %f \n", Datum.x, Datum.y, Datum.z);
-    }
+    // for(auto& Datum : points) {
+    //     printf("x is %f y is %f and z is %f \n", Datum.x, Datum.y, Datum.z);
+    // }
     
     runGPU(points, centroids, number_of_examples, iterations, number_of_clusters);
     runCPU(points, centroids, number_of_examples, iterations, number_of_clusters);
