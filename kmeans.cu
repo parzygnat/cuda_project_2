@@ -90,78 +90,61 @@ void runCPU(Points points, Points centroids, int number_of_examples, float thres
 __device__ float distance_squared(float x1, float x2, float y1, float y2, float z1, float z2) {
     return (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) + (z1-z2)*(z1-z2);
 }
-
-__global__ void distances_calculation(Datum* d_points, Datum* d_centroids, Datum* new_centroids, int* counters, int* assignments, int number_of_examples, int number_of_clusters, int* global_changed) {
+__global__ void move_centroids(Datum* d_centroids, Datum* new_centroids, int* counters, int number_of_clusters) {
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
     int local_tid = blockIdx.x;
+    if(tid >= number_of_clusters) return;
+    Datum _centroid = new_centroids[tid];
+    const int count = max(1, counters[cluster]);
+    d_centroids[tid].x = _centroid.x/count;
+    d_centroids[tid].y = _centroid.y/count;
+    d_centroids[tid].z = _centroid.z/count;
+}
+
+__global__ void distances_calculation(Datum* d_points, Datum* d_centroids, Datum* new_centroids, int* counters, int number_of_examples, int number_of_clusters) {
+    int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    int local_tid = blockIdx.x;
+    if(tid >= number_of_examples) return;
     extern __shared__ Datum local_centroids[];
-    __shared__ int _changed[1024];
-    _changed[local_tid] = 0;
     float currentDistance = FLT_MAX;
     int currentCentroid = 0;
     //coalesced read
     float _distance;
 
-    if(tid < number_of_examples) {
-        float _x = d_points[tid].x;
-        float _y = d_points[tid].y;
-        float _z = d_points[tid].z;
-        if(local_tid < number_of_clusters) {
-            local_centroids[local_tid]= d_centroids[tid];
+    float _x = d_points[tid].x;
+    float _y = d_points[tid].y;
+    float _z = d_points[tid].z;
+    if(local_tid < number_of_clusters) {
+        local_centroids[local_tid]= d_centroids[tid];
+    }
+    for(int i = 0; i < number_of_clusters; ++i) {
+        _distance = distance_squared(_x, local_centroids[i].x, _y,local_centroids[i].y , _z, local_centroids[i].z);
+        if(_distance < currentDistance) {
+            currentCentroid = i;
+            currentDistance = _distance;
         }
-        for(int i = 0; i < number_of_clusters; ++i) {
-            _distance = distance_squared(_x, local_centroids[i].x, _y,local_centroids[i].y , _z, local_centroids[i].z);
-            if(_distance < currentDistance) {
-                currentCentroid = i;
-                currentDistance = _distance;
-            }
-        }
-        if(assignments[tid] != currentCentroid) {
-            _changed[tid] = 1;
-            assignments[tid] = currentCentroid;
-        }
+    }
 
-        // Slow but simple.
-        atomicAdd(&new_centroids[currentCentroid].x, _x);
-        atomicAdd(&new_centroids[currentCentroid].y, _y);
-        atomicAdd(&new_centroids[currentCentroid].z, _z);
-        atomicAdd(&counters[currentCentroid], 1);
-}
-    __syncthreads(); 
-    int offset = 1;
-    for (int d = 1024>>1; d > 0; d >>=1) {
-        __syncthreads(); 
-        if(local_tid < d) {
-            int ai = offset*(2*local_tid+1)-1;
-            int bi = offset*(2*local_tid+2)-1;
-            _changed[bi] += +_changed[ai];
-        }
-        offset *= 2;
-    }
-    __syncthreads(); 
-    if(local_tid == 0) {
-        atomicAdd(global_changed, _changed[1023]);
-    }
+    // Slow but simple.
+    atomicAdd(&new_centroids[currentCentroid].x, _x);
+    atomicAdd(&new_centroids[currentCentroid].y, _y);
+    atomicAdd(&new_centroids[currentCentroid].z, _z);
+    atomicAdd(&counters[currentCentroid], 1);
+
 }
 
-void runGPU(Points points, Points centroids, int number_of_examples, float threshold, int number_of_clusters){
+void runGPU(Points points, Points centroids, int iterations, int number_of_examples, int number_of_clusters){
     //TODO initialization and CUDAMallocs
     Datum* d_points;
-    int* if_changed;
-    int* global_changed;
     Datum* d_centroids;
     Datum* new_centroids;
     int* counters;
     int* assignments;
     //we will be accessing memory structures concurrently -> AoS makes more sense than SoA
-    cudaMallocManaged(&if_changed, points.size()*sizeof(int));
-    cudaMallocManaged(&global_changed, sizeof(int));
     cudaMallocManaged(&d_points, points.size()*sizeof(Datum));
     cudaMallocManaged(&d_centroids, centroids.size()*sizeof(Datum));
     cudaMallocManaged(&new_centroids, centroids.size()*sizeof(Datum));
     cudaMallocManaged(&counters, centroids.size()*sizeof(int));
-    cudaMallocManaged(&assignments, points.size()*sizeof(int));
-    cudaMemset(assignments, -1, points.size()*sizeof(int));
     for(int i = 0; i < number_of_examples; ++i) {
         d_points[i] = points[i];
     }
@@ -175,18 +158,16 @@ void runGPU(Points points, Points centroids, int number_of_examples, float thres
     int num_threads = 1024;
     int num_blocks = (number_of_examples + num_threads - 1) / num_threads;
     int mem = number_of_clusters*sizeof(Datum);
-    //while(changed/number_of_examples > threshold) {
-        distances_calculation<<<num_threads, num_blocks, mem>>>(d_points, d_centroids, new_centroids, counters, assignments, number_of_examples, number_of_clusters, global_changed);
+    for(int i = 0; i < iterations; ++i) {
+        distances_calculation<<<num_threads, num_blocks, mem>>>(d_points, d_centroids, new_centroids, counters, number_of_examples, number_of_clusters);
         gpuErrchk( cudaPeekAtLastError() );
         gpuErrchk( cudaDeviceSynchronize() );
-        printf("that many have changed their assignment %d", *global_changed);
-        // move_centroids<<<1, number_of_clusters>>>>();
-        // gpuErrchk( cudaPeekAtLastError() );
-        // gpuErrchk( cudaDeviceSynchronize() );
+        move_centroids<<<1, number_of_clusters>>>>(d_centroids, new_centroids, counters, number_of_clusters);
+        gpuErrchk( cudaPeekAtLastError() );
+        gpuErrchk( cudaDeviceSynchronize() );
 
-    //}
+    }
 
-    //TODO cudaFree
     cudaFree(d_points);
     cudaFree(d_centroids);
     cudaFree(new_centroids);
@@ -198,13 +179,13 @@ int main(int argc, char *argv[])
 {
     if(argc < 2)
     { 
-        printf("Not enough arguments\n 1st argument -> number of examples to generate divisible by 8\n 2nd argument -> maximal absolute value on grid \n 3rd argument -> 0-1 threshold for stopping iterating\n\n");
+        printf("Not enough arguments\n 1st argument -> number of examples to generate divisible by 8\n 2nd argument -> maximal absolute value on grid \n 3rd argument -> number of iterations\n\n");
         return 0;
     }
     //default number of clusters = 8;
     int number_of_examples = atoi(argv[1]);
     float grid_max_value = atof(argv[2]);
-    float threshold = atof(argv[3]);
+    int iterations = atoi(argv[3]);
     int number_of_clusters = NUMBER_OF_CLUSTERS;
     if(number_of_examples%number_of_clusters != 0) {
         printf("The number of examples has to be divisible by 8\n\n");
@@ -261,8 +242,8 @@ int main(int argc, char *argv[])
     //     printf("x is %f y is %f and z is %f \n", Datum.x, Datum.y, Datum.z);
     // }
     
-    runCPU(points, centroids, number_of_examples, threshold);
-    runGPU(points, centroids, number_of_examples, threshold, number_of_clusters);
+    runCPU(points, centroids, number_of_examples, iterations);
+    runGPU(points, centroids, number_of_examples, iterations, number_of_clusters);
 
     return 0;
 }
