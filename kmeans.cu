@@ -110,6 +110,7 @@ __global__ void distances_calculation(Datum* d_points, Datum* d_centroids, Datum
         if(local_tid < number_of_clusters) {
             local_centroids[tid]= d_centroids[tid];
         }
+        return;
         for(int i = 0; i < number_of_clusters; ++i) {
             _distance = distance_squared(_x, local_centroids[i].x, _y,local_centroids[i].y , _z, local_centroids[i].z);
             if(_distance < currentDistance) {
@@ -117,7 +118,6 @@ __global__ void distances_calculation(Datum* d_points, Datum* d_centroids, Datum
                 currentDistance = _distance;
             }
         }
-        return;
         if(assignments[tid] != currentCentroid) {
             _changed[tid] = 1;
             assignments[tid] = currentCentroid;
