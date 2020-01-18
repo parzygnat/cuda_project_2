@@ -106,7 +106,6 @@ __global__ void distances_calculation(float* d_points_x, float* d_points_y, floa
     float currentDistance = FLT_MAX;
     int currentCentroid = 0;
     //coalesced read
-    float _distance;
     float _x = d_points_x[tid];
     float _y = d_points_y[tid];
     float _z = d_points_z[tid];
@@ -117,7 +116,7 @@ __global__ void distances_calculation(float* d_points_x, float* d_points_y, floa
     }
     __syncthreads();
     for(int i = 0; i < number_of_clusters; ++i) {
-        _distance = distance_squared(_x, local_centroids[i], _y,local_centroids[i + number_of_clusters] , _z, local_centroids[i + 2*number_of_clusters]);
+        float _distance = distance_squared(_x, local_centroids[i], _y,local_centroids[i + number_of_clusters] , _z, local_centroids[i + 2*number_of_clusters]);
         if(_distance < currentDistance) {
             currentCentroid = i;
             currentDistance = _distance;
