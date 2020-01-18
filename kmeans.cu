@@ -107,9 +107,9 @@ __global__ void distances_calculation(Datum* d_points, Datum* d_centroids, Datum
     //coalesced read
     float _distance;
     Datum _localDatum = d_points[tid];
-    float _x = _localDatum[tid].x;
-    float _y = _localDatum[tid].y;
-    float _z = _localDatum[tid].z;
+    float _x = _localDatum.x;
+    float _y = _localDatum.y;
+    float _z = _localDatum.z;
     if(local_tid < number_of_clusters) {
         local_centroids[local_tid]= d_centroids[tid];
     }
