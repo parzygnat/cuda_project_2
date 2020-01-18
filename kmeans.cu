@@ -33,14 +33,14 @@ float squared_distance(Datum a, Datum b) {
     return square(a.x - b.x) + square(a.y - b.y) + square(a.z - b.z);
 }
 
-Points kmeansCPU(const Points& points, Points centroids, int number_of_examples, int iterations) {
+Points kmeansCPU(const Points& points, Points centroids, int number_of_examples, int iterations, int number_of_clusters) {
     Points _centroids(centroids);
     std::vector<int> assignments(number_of_examples);
     for(int i = 0; i < iterations; ++i){
         for(int example = 0; example < number_of_examples - 1; ++example) {
             float currentDistance = std::numeric_limits<float>::max();
             int currentCentroid = 0;
-            for(int centroid = 0; centroid < NUMBER_OF_CLUSTERS - 1; ++centroid) {
+            for(int centroid = 0; centroid < number_of_clusters - 1; ++centroid) {
                 if(squared_distance(points[example], centroids[centroid]) < currentDistance){
                     currentDistance = squared_distance(points[example], centroids[centroid]);
                     currentCentroid = centroid;
@@ -67,11 +67,11 @@ Points kmeansCPU(const Points& points, Points centroids, int number_of_examples,
     return centroids;
     }
 
-void runCPU(Points points, Points centroids, int number_of_examples, int iterations)
+void runCPU(Points points, Points centroids, int number_of_examples, int iterations, int number_of_clusters)
 {
     printf("Starting sequential kmeans\n");
     auto start = std::chrono::system_clock::now();
-    Points result = kmeansCPU(points, centroids, number_of_examples, iterations);
+    Points result = kmeansCPU(points, centroids, number_of_examples, iterations, number_of_clusters);
     auto end = std::chrono::system_clock::now();
     printf("\n");
     for (auto i: result)
@@ -255,7 +255,7 @@ int main(int argc, char *argv[])
     //     printf("x is %f y is %f and z is %f \n", Datum.x, Datum.y, Datum.z);
     // }
     
-    runCPU(points, centroids, number_of_examples, iterations);
+    runCPU(points, centroids, number_of_examples, iterations, number_of_clusters);
     runGPU(points, centroids, number_of_examples, iterations, number_of_clusters);
 
     return 0;
