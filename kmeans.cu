@@ -134,7 +134,7 @@ __global__ void distances_calculation(float* d_points_x, float* d_points_y, floa
 
 }
 
-void runGPU(Points points, Points centroids, int iterations, int number_of_examples, int number_of_clusters)
+void runGPU(Points points, Points centroids, int number_of_examples, int iterations, int number_of_clusters)
 {
     //TODO initialization and CUDAMallocs
     float* d_points_x;
