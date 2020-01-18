@@ -36,6 +36,7 @@ float squared_distance(Datum a, Datum b) {
 Points kmeansCPU(const Points& points, Points centroids, int number_of_examples, int iterations, int number_of_clusters) {
     std::vector<int> assignments(number_of_examples);
     for(int i = 0; i < iterations; ++i){
+        printf("iteration %d \n", i);
         for(int example = 0; example < number_of_examples - 1; ++example) {
             float currentDistance = std::numeric_limits<float>::max();
             int currentCentroid = 0;
@@ -175,7 +176,6 @@ void runGPU(Points points, Points centroids, int number_of_examples, int iterati
     printf("Starting parallel kmeans\n");
     auto start = std::chrono::system_clock::now();
     for(int i = 0; i < iterations; ++i) {
-        printf("iteration %d \n", i);
         cudaMemset(counters, 0, number_of_clusters*sizeof(int));
         distances_calculation<<<num_threads, num_blocks, mem>>>(d_points_x, d_points_y, d_points_z, d_centroids_x, d_centroids_y, d_centroids_z, d_new_centroids_x, d_new_centroids_y, d_new_centroids_z, counters, number_of_examples, number_of_clusters);
         gpuErrchk( cudaPeekAtLastError() );
