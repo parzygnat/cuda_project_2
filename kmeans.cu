@@ -121,7 +121,7 @@ __global__ void distances_calculation(Datum* d_points, Datum* d_centroids, Datum
         }
     }
 
-    Slow but simple.
+    //Slow but simple.
     atomicAdd(&new_centroids[currentCentroid].x, _x);
     atomicAdd(&new_centroids[currentCentroid].y, _y);
     atomicAdd(&new_centroids[currentCentroid].z, _z);
