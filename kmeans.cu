@@ -131,7 +131,7 @@ __global__ void distances_calculation(Datum* d_points, Datum* d_centroids, Datum
 }
     __syncthreads(); 
 
-    offset = 1;
+    int offset = 1;
     for (int d = 1024>>1; d > 0; d >>=1) {
         __syncthreads(); 
         if(local_tid < d) {
@@ -149,7 +149,6 @@ __global__ void distances_calculation(Datum* d_points, Datum* d_centroids, Datum
 
 void runGPU(Points points, Points centroids, int number_of_examples, float threshold, int number_of_clusters){
     //TODO initialization and CUDAMallocs
-    float changed = number_of_examples;
     Datum* d_points;
     int* if_changed;
     int* global_changed;
