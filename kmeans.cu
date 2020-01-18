@@ -152,6 +152,8 @@ void runGPU(Points points, Points centroids, int iterations, int number_of_examp
     int num_threads = 1024;
     int num_blocks = (number_of_examples + num_threads - 1) / num_threads;
     int mem = number_of_clusters*sizeof(Datum);
+    printf("Starting parallel kmeans\n");
+    auto start = std::chrono::system_clock::now();
     for(int i = 0; i < iterations; ++i) {
         distances_calculation<<<num_threads, num_blocks, mem>>>(d_points, d_centroids, new_centroids, counters, number_of_examples, number_of_clusters);
         gpuErrchk( cudaPeekAtLastError() );
@@ -161,7 +163,10 @@ void runGPU(Points points, Points centroids, int iterations, int number_of_examp
         gpuErrchk( cudaDeviceSynchronize() );
 
     }
-
+    auto end = std::chrono::system_clock::now();
+    float duration = 1000.0*std::chrono::duration<float>(end - start).count();
+    printf("\nElapsed time in milliseconds : %f ms.\n\n", duration);
+    
     cudaFree(d_points);
     cudaFree(d_centroids);
     cudaFree(new_centroids);
