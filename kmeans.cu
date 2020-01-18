@@ -106,10 +106,10 @@ __global__ void distances_calculation(Datum* d_points, Datum* d_centroids, Datum
     int currentCentroid = 0;
     //coalesced read
     float _distance;
-
-    float _x = d_points[tid].x;
-    float _y = d_points[tid].y;
-    float _z = d_points[tid].z;
+    Datum _localDatum = d_points[tid];
+    float _x = _localDatum[tid].x;
+    float _y = _localDatum[tid].y;
+    float _z = _localDatum[tid].z;
     if(local_tid < number_of_clusters) {
         local_centroids[local_tid]= d_centroids[tid];
     }
@@ -122,10 +122,12 @@ __global__ void distances_calculation(Datum* d_points, Datum* d_centroids, Datum
     }
 
     // Slow but simple.
-    atomicAdd(&new_centroids[currentCentroid].x, _x);
-    atomicAdd(&new_centroids[currentCentroid].y, _y);
-    atomicAdd(&new_centroids[currentCentroid].z, _z);
-    atomicAdd(&counters[currentCentroid], 1);
+    // atomicAdd(&new_centroids[currentCentroid].x, _x);
+    // atomicAdd(&new_centroids[currentCentroid].y, _y);
+    // atomicAdd(&new_centroids[currentCentroid].z, _z);
+    // atomicAdd(&counters[currentCentroid], 1);
+
+    
 
 }
 
