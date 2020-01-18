@@ -155,13 +155,17 @@ void runGPU(Points points, Points centroids, int iterations, int number_of_examp
     cudaMallocManaged(&d_new_centroids_z, centroids.size()*sizeof(float));
     cudaMallocManaged(&counters, centroids.size()*sizeof(int));
     for(int i = 0; i < number_of_examples; ++i) {
-        d_points[i] = points[i];
+        d_points_x[i] = points[i].x;
+        d_points_y[i] = points[i].y;
+        d_points_z[i] = points[i].z;
     }
     for(int i = 0; i < number_of_clusters; ++i) {
-        d_centroids[i] = centroids[i];
-        new_centroids[i].x = 0;
-        new_centroids[i].y = 0;
-        new_centroids[i].z = 0;
+        d_centroids_x[i] = centroids[i].x;
+        d_centroids_y[i] = centroids[i].y;
+        d_centroids_z[i] = centroids[i].z;
+        d_new_centroids_x[i].x = 0;
+        d_new_centroids_y[i].y = 0;
+        d_new_centroids_z[i].z = 0;
     }
     
     int num_threads = 1024;
