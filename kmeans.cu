@@ -37,7 +37,7 @@ Points kmeansCPU(const Points& points, Points centroids, int number_of_examples,
     std::vector<int> assignments(number_of_examples);
     for(int i = 0; i < iterations; ++i){
         for(int example = 0; example < number_of_examples - 1; ++example) {
-            float currentDistance = std::numeric_limits<float>::max();
+            float currentDistance = FLT_MAX;
             int currentCentroid = 0;
             for(int centroid = 0; centroid < number_of_clusters - 1; ++centroid) {
                 if(squared_distance(points[example], centroids[centroid]) < currentDistance){
