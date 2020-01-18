@@ -187,9 +187,9 @@ void runGPU(Points points, Points centroids, int iterations, int number_of_examp
     float duration = 1000.0*std::chrono::duration<float>(end - start).count();
     printf("\nElapsed time in milliseconds : %f ms.\n\n", duration);
 
-    for (int i = 0; i < number_of_clusters; i++)
-        printf("%f  %f  %f", d_centroids_x[i], d_centroids_y[i], d_centroids_z[i]);
-    printf("\n");
+    for (int i = 0; i < number_of_clusters; i++){
+        printf("%.6f  %.6f  %.6f", d_centroids_x[i], d_centroids_y[i], d_centroids_z[i]);     printf("\n");}
+
 
     cudaFree(d_points_x);
     cudaFree(d_points_y);
