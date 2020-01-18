@@ -114,7 +114,7 @@ __global__ void distances_calculation(float* d_points_x, float* d_points_y, floa
         local_centroids[local_tid]= d_centroids_x[local_tid];
         local_centroids[local_tid + number_of_clusters]= d_centroids_y[local_tid];
         local_centroids[local_tid + number_of_clusters + number_of_clusters]= d_centroids_z[local_tid];
-        printf("im here %d\n", local_tid);
+        printf("im here %d %d\n", local_tid, number_of_clusters);
     }
     __syncthreads();
     if(local_tid < number_of_clusters && local_centroids[local_tid] != d_centroids_x[local_tid])
