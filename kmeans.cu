@@ -36,7 +36,6 @@ float squared_distance(Datum a, Datum b) {
 Points kmeansCPU(const Points& points, Points centroids, int number_of_examples, int iterations, int number_of_clusters) {
     std::vector<int> assignments(number_of_examples);
     for(int i = 0; i < iterations; ++i){
-        printf("iteration %d \n", i);
         for(int example = 0; example < number_of_examples - 1; ++example) {
             float currentDistance = std::numeric_limits<float>::max();
             int currentCentroid = 0;
