@@ -103,7 +103,6 @@ __global__ void distances_calculation(float* d_points_x, float* d_points_y, floa
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
     int local_tid = threadIdx.x;
     if(tid >= number_of_examples) return;
-    printf("im here and working %d\n", tid);
     float currentDistance = FLT_MAX;
     int currentCentroid = 0;
     //coalesced read
@@ -125,6 +124,7 @@ __global__ void distances_calculation(float* d_points_x, float* d_points_y, floa
     }
 
     //Slow but simple.
+    printf("tid: %d im adding to %d values %f %f %f\n", tid, currentCentroid, _x, _y, _z);
     atomicAdd(&d_new_centroids_x[currentCentroid], _x);
     atomicAdd(&d_new_centroids_y[currentCentroid], _y);
     atomicAdd(&d_new_centroids_z[currentCentroid], _z);
@@ -279,10 +279,10 @@ int main(int argc, char *argv[])
     for(auto& centroid : centroids) {
         centroid = points[indices(random_number_generator)];
     }
-    // Datum PRINTING
-    // for(auto& Datum : points) {
-    //     printf("x is %f y is %f and z is %f \n", Datum.x, Datum.y, Datum.z);
-    // }
+    Datum PRINTING
+    for(auto& Datum : points) {
+        printf("x is %f y is %f and z is %f \n", Datum.x, Datum.y, Datum.z);
+    }
     
     runGPU(points, centroids, number_of_examples, iterations, number_of_clusters);
     runCPU(points, centroids, number_of_examples, iterations, number_of_clusters);
