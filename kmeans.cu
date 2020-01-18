@@ -103,12 +103,13 @@ __global__ void distances_calculation(float* d_points_x, float* d_points_y, floa
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
     int local_tid = threadIdx.x;
     if(tid >= number_of_examples) return;
-    float currentDistance = FLT_MAX;
     int currentCentroid = 0;
     //coalesced read
     float _x = d_points_x[tid];
     float _y = d_points_y[tid];
     float _z = d_points_z[tid];
+    float currentDistance = FLT_MAX;
+
     if(local_tid < number_of_clusters) {
         local_centroids[local_tid]= d_centroids_x[tid];
         local_centroids[local_tid + number_of_clusters]= d_centroids_y[tid];
@@ -116,7 +117,7 @@ __global__ void distances_calculation(float* d_points_x, float* d_points_y, floa
     }
     __syncthreads();
     for(int i = 0; i < number_of_clusters; ++i) {
-        float _distance = distance_squared(_x, local_centroids[i], _y,local_centroids[i + number_of_clusters] , _z, local_centroids[i + 2*number_of_clusters]);
+        const float _distance = distance_squared(_x, local_centroids[i], _y,local_centroids[i + number_of_clusters] , _z, local_centroids[i + 2*number_of_clusters]);
         if(_distance < currentDistance) {
             currentCentroid = i;
             currentDistance = _distance;
@@ -124,7 +125,7 @@ __global__ void distances_calculation(float* d_points_x, float* d_points_y, floa
     }
 
     //Slow but simple.
-    printf("tid: %d im adding to %d values %f %f %f\n", tid, currentCentroid, _x, _y, _z);
+    printf("tid: %d im adding to %d values %f %f %f, number of clusters is \n", tid, currentCentroid, _x, _y, _z, number_of_clusters);
     atomicAdd(&d_new_centroids_x[currentCentroid], _x);
     atomicAdd(&d_new_centroids_y[currentCentroid], _y);
     atomicAdd(&d_new_centroids_z[currentCentroid], _z);
