@@ -163,9 +163,9 @@ void runGPU(Points points, Points centroids, int iterations, int number_of_examp
         d_centroids_x[i] = centroids[i].x;
         d_centroids_y[i] = centroids[i].y;
         d_centroids_z[i] = centroids[i].z;
-        d_new_centroids_x[i].x = 0;
-        d_new_centroids_y[i].y = 0;
-        d_new_centroids_z[i].z = 0;
+        d_new_centroids_x[i] = 0;
+        d_new_centroids_y[i] = 0;
+        d_new_centroids_z[i] = 0;
     }
     
     int num_threads = 1024;
