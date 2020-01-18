@@ -96,8 +96,8 @@ __global__ void distances_calculation(Datum* d_points, Datum* d_centroids, Datum
     int local_tid = blockIdx.x;
     extern __shared__ Datum local_centroids[];
     __shared__ int _changed[1024];
-    return;
     _changed[local_tid] = 0;
+    return;
     float currentDistance = FLT_MAX;
     int currentCentroid = 0;
     //coalesced read
