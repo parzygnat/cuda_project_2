@@ -117,7 +117,7 @@ __global__ void distances_calculation(Datum* d_points, Datum* d_centroids, Datum
                 currentDistance = _distance;
             }
         }
-
+        return;
         if(assignments[tid] != currentCentroid) {
             _changed[tid] = 1;
             assignments[tid] = currentCentroid;
