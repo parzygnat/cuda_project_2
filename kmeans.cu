@@ -68,7 +68,7 @@ Points kmeansCPU(const Points& points, Points centroids, int number_of_examples,
 
 void runCPU(Points points, Points centroids, int number_of_examples, int iterations, int number_of_clusters)
 {
-    printf("Starting sequential kmeans\n");
+    printf("\nStarting sequential kmeans\n");
     auto start = std::chrono::system_clock::now();
     Points result = kmeansCPU(points, centroids, number_of_examples, iterations, number_of_clusters);
     auto end = std::chrono::system_clock::now();
