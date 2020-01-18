@@ -125,7 +125,7 @@ __global__ void distances_calculation(float* d_points_x, float* d_points_y, floa
     }
 
     //Slow but simple.
-    printf("tid: %d im adding to %d values %f %f %f, number of clusters is \n", tid, currentCentroid, _x, _y, _z, number_of_clusters);
+    printf("tid: %d im adding to %d values %f %f %f, number of clusters is %d\n", tid, currentCentroid, _x, _y, _z, number_of_clusters);
     atomicAdd(&d_new_centroids_x[currentCentroid], _x);
     atomicAdd(&d_new_centroids_y[currentCentroid], _y);
     atomicAdd(&d_new_centroids_z[currentCentroid], _z);
