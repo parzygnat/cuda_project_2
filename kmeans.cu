@@ -92,8 +92,8 @@ __global__ void move_centroids(float* d_centroids_x, float* d_centroids_y, float
     if(tid >= number_of_clusters) return;
     const int count = max(1, counters[tid]);
     d_centroids_x[tid] = d_new_centroids_x[tid]/count;
-    d_centroids_y[tid] = d_new_centroids_x[tid]/count;
-    d_centroids_z[tid] = d_new_centroids_x[tid]/count;
+    d_centroids_y[tid] = d_new_centroids_y[tid]/count;
+    d_centroids_z[tid] = d_new_centroids_z[tid]/count;
     d_new_centroids_x[tid] = 0;
     d_new_centroids_y[tid] = 0;
     d_new_centroids_z[tid] = 0;
