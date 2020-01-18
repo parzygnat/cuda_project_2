@@ -64,7 +64,7 @@ Points kmeansCPU(const Points& points, Points centroids, int number_of_examples,
         }
         
     }
-    return centroids;
+    return _centroids;
     }
 
 void runCPU(Points points, Points centroids, int number_of_examples, int iterations, int number_of_clusters)
@@ -86,7 +86,8 @@ void runCPU(Points points, Points centroids, int number_of_examples, int iterati
 __device__ float distance_squared(float x1, float x2, float y1, float y2, float z1, float z2) {
     return (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) + (z1-z2)*(z1-z2);
 }
-__global__ void move_centroids(Datum* d_centroids, Datum* new_centroids, int* counters, int number_of_clusters) {
+__global__ void move_centroids(Datum* d_centroids, Datum* new_centroids, int* counters, int number_of_clusters) 
+{
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
     if(tid >= number_of_clusters) return;
     Datum _centroid = new_centroids[tid];
@@ -96,7 +97,8 @@ __global__ void move_centroids(Datum* d_centroids, Datum* new_centroids, int* co
     d_centroids[tid].z = _centroid.z/count;
 }
 
-__global__ void distances_calculation(Datum* d_points, Datum* d_centroids, Datum* new_centroids, int* counters, int number_of_examples, int number_of_clusters) {
+__global__ void distances_calculation(Datum* d_points, Datum* d_centroids, Datum* new_centroids, int* counters, int number_of_examples, int number_of_clusters) 
+{
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
     int local_tid = threadIdx.x;
     if(tid >= number_of_examples) return;
@@ -128,11 +130,18 @@ __global__ void distances_calculation(Datum* d_points, Datum* d_centroids, Datum
 
 }
 
-void runGPU(Points points, Points centroids, int iterations, int number_of_examples, int number_of_clusters){
+void runGPU(Points points, Points centroids, int iterations, int number_of_examples, int number_of_clusters)
+{
     //TODO initialization and CUDAMallocs
-    Datum* d_points;
-    Datum* d_centroids;
-    Datum* new_centroids;
+    float* d_points_x;
+    float* d_points_y;
+    float* d_points_z;
+    float* d_centroids_x;
+    float* d_centroids_y;
+    float* d_centroids_z;  
+    float* d_new_centroids_x;
+    float* d_new_centroids_y;
+    float* d_new_centroids_z;
     int* counters;
     //we will be accessing memory structures concurrently -> AoS makes more sense than SoA
     cudaMallocManaged(&d_points, points.size()*sizeof(Datum));
