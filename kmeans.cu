@@ -161,6 +161,7 @@ void runGPU(Points points, Points centroids, int number_of_examples, float thres
     cudaMallocManaged(&new_centroids, centroids.size()*sizeof(Datum));
     cudaMallocManaged(&counters, centroids.size()*sizeof(int));
     cudaMallocManaged(&assignments, points.size()*sizeof(int));
+    cudaMemset(assignments, -1, points.size()*sizeof(int));
     for(int i = 0; i < number_of_examples; ++i) {
         d_points[i] = points[i];
     }
