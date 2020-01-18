@@ -130,7 +130,7 @@ __global__ void distances_calculation(Datum* d_points, Datum* d_centroids, Datum
         atomicAdd(&counters[currentCentroid], 1);
 }
     __syncthreads(); 
-
+    return;
     int offset = 1;
     for (int d = 1024>>1; d > 0; d >>=1) {
         __syncthreads(); 
