@@ -103,6 +103,7 @@ __global__ void move_centroids(float* d_centroids_x, float* d_centroids_y, float
 
 __global__ void distances_calculation(float* d_points_x, float* d_points_y, float* d_points_z, float* d_centroids_x, float* d_centroids_y, float* d_centroids_z, float* d_new_centroids_x, float* d_new_centroids_y, float* d_new_centroids_z, int* counters, int number_of_examples, int number_of_clusters) 
 {
+    //this version works on atomics with 7x speedup
     extern __shared__ float local_centroids[];
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
     int local_tid = threadIdx.x;
