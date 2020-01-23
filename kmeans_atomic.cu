@@ -89,56 +89,27 @@ void runCPU(Points points, Points centroids, int number_of_examples, int iterati
 __device__ float distance_squared(float x1, float x2, float y1, float y2, float z1, float z2) {
     return (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) + (z1-z2)*(z1-z2);
 }
-__global__ void move_centroids(float* d_centroids_x, float* d_centroids_y, float* d_centroids_z, float* d_new_centroids_x, float* d_new_centroids_y, float* d_new_centroids_z, float* d_counters, int number_of_clusters) 
+__global__ void move_centroids(float* d_centroids_x, float* d_centroids_y, float* d_centroids_z, float* d_new_centroids_x, float* d_new_centroids_y, float* d_new_centroids_z, int* counters, int number_of_clusters) 
 {
-    int tid = threadIdx.x + blockDim.x*blockIdx.x;
-    int local_tid = threadIdx.x;
-    extern __shared__ float this_centroid_x[];
-    float* this_centroid_y = (float*)this_centroid_x + blockDim.x; //our current block dim is our previous gridDim
-    float* this_centroid_z = (float*)this_centroid_x + 2 * + blockDim.x;
-    float* this_centroid_counters = (float*)this_centroid_x + 3 * + blockDim.x;
-
-    this_centroid_x[local_tid] = d_new_centroids_x[tid];
-    this_centroid_y[local_tid] = d_new_centroids_y[tid];
-    this_centroid_z[local_tid] = d_new_centroids_z[tid];
-    this_centroid_counters[local_tid] = d_counters[tid];
-    __syncthreads();
-
-    //TODO reduce on values -> works only when number of blocks is some power of 2 
-    for(int d = blockDim.x/2; d > 0; d>>=1) {
-        if(local_tid < d) {
-            this_centroid_x[local_tid] += this_centroid_x[local_tid + d];
-            this_centroid_y[local_tid] += this_centroid_y[local_tid + d];
-            this_centroid_z[local_tid] += this_centroid_z[local_tid + d];
-            this_centroid_counters[local_tid] += this_centroid_counters[local_tid + d];
-        }
-        __syncthreads();
-    }
-
-    //assignment of new values
-    if(local_tid == 0) {
-        const float count = this_centroid_counters[local_tid];
-        d_centroids_x[blockIdx.x] = this_centroid_x[local_tid]/count;
-        d_centroids_y[blockIdx.x] = this_centroid_y[local_tid]/count;
-        d_centroids_z[blockIdx.x] = this_centroid_z[local_tid]/count;
-    }
-    __syncthreads();
-
+    int tid = threadIdx.x;
+    const int count = max(1, counters[tid]);
+    d_centroids_x[tid] = d_new_centroids_x[tid]/count;
+    d_centroids_y[tid] = d_new_centroids_y[tid]/count;
+    d_centroids_z[tid] = d_new_centroids_z[tid]/count;
     d_new_centroids_x[tid] = 0;
     d_new_centroids_y[tid] = 0;
     d_new_centroids_z[tid] = 0;
-    d_counters[tid] = 0;
 }
 
-__global__ void distances_calculation(float* d_points_x, float* d_points_y, float* d_points_z, float* d_centroids_x, float* d_centroids_y, float* d_centroids_z, float* d_new_centroids_x, float* d_new_centroids_y, float* d_new_centroids_z, float* d_counters, int number_of_examples, int number_of_clusters) 
+__global__ void distances_calculation(float* d_points_x, float* d_points_y, float* d_points_z, float* d_centroids_x, float* d_centroids_y, float* d_centroids_z, float* d_new_centroids_x, float* d_new_centroids_y, float* d_new_centroids_z, int* counters, int number_of_examples, int number_of_clusters) 
 {
     //this version works on atomics with 7x speedup
     extern __shared__ float local_centroids[];
-    float* s_array = (float*)local_centroids + 3 * number_of_clusters;
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
     int local_tid = threadIdx.x;
     if(tid >= number_of_examples) return;
     int currentCentroid = 0;
+    //coalesced read
     float _x = d_points_x[tid];
     float _y = d_points_y[tid];
     float _z = d_points_z[tid];
@@ -158,39 +129,12 @@ __global__ void distances_calculation(float* d_points_x, float* d_points_y, floa
         }
     }
 
-    __syncthreads();
-
-    int offset = blockDim.x; //
-    int first = local_tid;
-    int second = local_tid + offset;
-    int third = local_tid + 2 * offset;
-    int fourth = local_tid + 3 * offset;
-
-    for(int i = 0; i < number_of_clusters; ++i) {
-        s_array[first] = (currentCentroid == i) ? _x : 0;
-        s_array[second] = (currentCentroid == i) ? _y : 0;
-        s_array[third] = (currentCentroid == i) ? _z : 0;
-        s_array[fourth] = (currentCentroid == i) ? 1 : 0;
-        __syncthreads();
-
-        for(int d = blockDim.x/2; d > 0; d>>=1) {
-            if(local_tid < d) {
-                s_array[first] += s_array[first + d];
-                s_array[second] += s_array[second + d];
-                s_array[third] += s_array[third + d];
-                s_array[fourth] += s_array[fourth + d];
-            }
-            __syncthreads();
-        }
-
-        if(local_tid == 0) {
-            d_new_centroids_x[i * gridDim.x + blockIdx.x] = s_array[first];
-            d_new_centroids_y[i * gridDim.x + blockIdx.x] = s_array[second];
-            d_new_centroids_z[i * gridDim.x + blockIdx.x] = s_array[third];
-            d_counters[i * gridDim.x + blockIdx.x] = s_array[fourth];
-        }
-        __syncthreads();
-    }
+    //Slow but simple.
+    //printf("tid: %d im adding to %d values %f %f %f, number of clusters is %d\n", tid, currentCentroid, _x, _y, _z, number_of_clusters);
+    atomicAdd(&d_new_centroids_x[currentCentroid], _x);
+    atomicAdd(&d_new_centroids_y[currentCentroid], _y);
+    atomicAdd(&d_new_centroids_z[currentCentroid], _z);
+    atomicAdd(&counters[currentCentroid], 1);
 
 }
 
@@ -206,9 +150,7 @@ void runGPU(Points points, Points centroids, int number_of_examples, int iterati
     float* d_new_centroids_x;
     float* d_new_centroids_y;
     float* d_new_centroids_z;
-    float* d_counters;
-    int num_threads = 1024;
-    int num_blocks = (number_of_examples + num_threads - 1) / num_threads;
+    int* counters;
     //we will be accessing memory structures concurrently -> AoS makes more sense than SoA
     cudaMallocManaged(&d_points_x, points.size()*sizeof(float));
     cudaMallocManaged(&d_points_y, points.size()*sizeof(float));
@@ -216,11 +158,10 @@ void runGPU(Points points, Points centroids, int number_of_examples, int iterati
     cudaMallocManaged(&d_centroids_x, centroids.size()*sizeof(float));
     cudaMallocManaged(&d_centroids_y, centroids.size()*sizeof(float));
     cudaMallocManaged(&d_centroids_z, centroids.size()*sizeof(float));
-    cudaMallocManaged(&d_new_centroids_x, num_blocks*centroids.size()*sizeof(float));
-    cudaMallocManaged(&d_new_centroids_y, num_blocks*centroids.size()*sizeof(float));
-    cudaMallocManaged(&d_new_centroids_z, num_blocks*centroids.size()*sizeof(float));
-    cudaMallocManaged(&d_counters, num_blocks*centroids.size()*sizeof(float));
-    
+    cudaMallocManaged(&d_new_centroids_x, centroids.size()*sizeof(float));
+    cudaMallocManaged(&d_new_centroids_y, centroids.size()*sizeof(float));
+    cudaMallocManaged(&d_new_centroids_z, centroids.size()*sizeof(float));
+    cudaMallocManaged(&counters, centroids.size()*sizeof(int));
     for(int i = 0; i < number_of_examples; ++i) {
         d_points_x[i] = points[i].x;
         d_points_y[i] = points[i].y;
@@ -235,17 +176,18 @@ void runGPU(Points points, Points centroids, int number_of_examples, int iterati
         d_new_centroids_z[i] = 0;
     }
     
-
-    int mem = 3*number_of_clusters*sizeof(float) + 4*num_threads*sizeof(float);
-    int mem2 = 4*num_blocks*sizeof(float);
+    int num_threads = 1024;
+    int num_blocks = (number_of_examples + num_threads - 1) / num_threads;
+    int mem = 3*number_of_clusters*sizeof(float);
     printf("Starting parallel kmeans\n");
     auto start = std::chrono::system_clock::now();
     for(int i = 0; i < iterations; ++i) {
-        distances_calculation<<<num_blocks, num_threads, mem>>>(d_points_x, d_points_y, d_points_z, d_centroids_x, d_centroids_y, d_centroids_z, d_new_centroids_x, d_new_centroids_y, d_new_centroids_z, d_counters, number_of_examples, number_of_clusters);
+        cudaMemset(counters, 0, number_of_clusters*sizeof(int));
+        distances_calculation<<<num_blocks, num_threads, mem>>>(d_points_x, d_points_y, d_points_z, d_centroids_x, d_centroids_y, d_centroids_z, d_new_centroids_x, d_new_centroids_y, d_new_centroids_z, counters, number_of_examples, number_of_clusters);
         gpuErrchk( cudaPeekAtLastError() );
         gpuErrchk( cudaDeviceSynchronize() );
         //for(int i = 0; i < number_of_clusters; ++i) printf("centroid sums: %f %f %f\n", d_new_centroids_x[i], d_new_centroids_y[i], d_new_centroids_z[i]);
-        move_centroids<<<number_of_clusters, num_blocks, mem2>>>(d_centroids_x, d_centroids_y, d_centroids_z, d_new_centroids_x, d_new_centroids_y, d_new_centroids_z, d_counters, number_of_clusters);
+        move_centroids<<<1, number_of_clusters>>>(d_centroids_x, d_centroids_y, d_centroids_z, d_new_centroids_x, d_new_centroids_y, d_new_centroids_z, counters, number_of_clusters);
         gpuErrchk( cudaPeekAtLastError() );
         gpuErrchk( cudaDeviceSynchronize() );
 
@@ -267,7 +209,7 @@ void runGPU(Points points, Points centroids, int number_of_examples, int iterati
     cudaFree(d_new_centroids_x);
     cudaFree(d_new_centroids_y);
     cudaFree(d_new_centroids_z);
-    cudaFree(d_counters);
+    cudaFree(counters);
 
 }
 

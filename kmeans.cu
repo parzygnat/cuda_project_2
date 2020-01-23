@@ -173,7 +173,8 @@ __global__ void distances_calculation(float* d_points_x, float* d_points_y, floa
     int third = local_tid + 2 * offset; //z
     int fourth = local_tid + 3 * offset; //counters
 
-    for(int i = 0; i < number_of_clusters; ++i) {
+    for(int i = 0; i < number_of_clusters; ++i) 
+    {
         s_array[first] = (has_element && (currentCentroid == i)) ? _x : 0;
         s_array[second] = (has_element && (currentCentroid == i)) ? _y : 0;
         s_array[third] = (has_element && (currentCentroid == i)) ? _z : 0;
