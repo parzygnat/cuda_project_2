@@ -89,27 +89,19 @@ void runCPU(Points points, Points centroids, int number_of_examples, int iterati
 __device__ float distance_squared(float x1, float x2, float y1, float y2, float z1, float z2) {
     return (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) + (z1-z2)*(z1-z2);
 }
-__global__ void move_centroids(float* d_centroids_x, float* d_centroids_y, float* d_centroids_z, float* d_new_centroids_x, float* d_new_centroids_y, float* d_new_centroids_z, float* d_counters, int number_of_clusters, int prev_size) 
+__global__ void move_centroids(float* d_centroids_x, float* d_centroids_y, float* d_centroids_z, float* d_new_centroids_x, float* d_new_centroids_y, float* d_new_centroids_z, float* d_counters, int number_of_clusters) 
 {
     int tid = threadIdx.x + blockDim.x*blockIdx.x;
     int local_tid = threadIdx.x;
     extern __shared__ float this_centroid_x[];
     float* this_centroid_y = (float*)this_centroid_x + blockDim.x; //our current block dim is our previous gridDim
-    float* this_centroid_z = (float*)this_centroid_x + 2 * blockDim.x;
-    float* this_centroid_counters = (float*)this_centroid_x + 3 * blockDim.x;
-    bool has_element = tid < number_of_clusters*prev_size;
-    if(has_element) {
-        this_centroid_x[local_tid] = d_new_centroids_x[tid];
-        this_centroid_y[local_tid] = d_new_centroids_y[tid];
-        this_centroid_z[local_tid] = d_new_centroids_z[tid];
-        this_centroid_counters[local_tid] = d_counters[tid];
-    }
-    else {
-        this_centroid_x[local_tid] = 0;
-        this_centroid_y[local_tid] = 0;
-        this_centroid_z[local_tid] = 0;
-        this_centroid_counters[local_tid] = 0;
-    }
+    float* this_centroid_z = (float*)this_centroid_x + 2 * + blockDim.x;
+    float* this_centroid_counters = (float*)this_centroid_x + 3 * + blockDim.x;
+
+    this_centroid_x[local_tid] = d_new_centroids_x[tid];
+    this_centroid_y[local_tid] = d_new_centroids_y[tid];
+    this_centroid_z[local_tid] = d_new_centroids_z[tid];
+    this_centroid_counters[local_tid] = d_counters[tid];
     __syncthreads();
 
     //TODO reduce on values -> works only when number of blocks is some power of 2 
@@ -131,12 +123,11 @@ __global__ void move_centroids(float* d_centroids_x, float* d_centroids_y, float
         d_centroids_z[blockIdx.x] = this_centroid_z[local_tid]/count;
     }
     __syncthreads();
-    if(has_element) {
-        d_new_centroids_x[tid] = 0;
-        d_new_centroids_y[tid] = 0;
-        d_new_centroids_z[tid] = 0;
-        d_counters[tid] = 0;
-    }
+
+    d_new_centroids_x[tid] = 0;
+    d_new_centroids_y[tid] = 0;
+    d_new_centroids_z[tid] = 0;
+    d_counters[tid] = 0;
 }
 
 __global__ void distances_calculation(float* d_points_x, float* d_points_y, float* d_points_z, float* d_centroids_x, float* d_centroids_y, float* d_centroids_z, float* d_new_centroids_x, float* d_new_centroids_y, float* d_new_centroids_z, float* d_counters, int number_of_examples, int number_of_clusters) 
@@ -146,18 +137,12 @@ __global__ void distances_calculation(float* d_points_x, float* d_points_y, floa
     float* s_array = (float*)local_centroids + 3 * number_of_clusters;
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
     int local_tid = threadIdx.x;
+    if(tid >= number_of_examples) return;
     int currentCentroid = 0;
-    float _x = 0;
-    float _y = 0;
-    float _z = 0;
+    float _x = d_points_x[tid];
+    float _y = d_points_y[tid];
+    float _z = d_points_z[tid];
     float currentDistance = FLT_MAX;
-    bool has_element = tid < number_of_examples;
-
-    if(has_element) {
-        _x = d_points_x[tid];
-        _y = d_points_y[tid];
-        _z = d_points_z[tid];
-    }
 
     if(local_tid < number_of_clusters) {
         local_centroids[local_tid]= d_centroids_x[local_tid];
@@ -165,13 +150,11 @@ __global__ void distances_calculation(float* d_points_x, float* d_points_y, floa
         local_centroids[local_tid + number_of_clusters + number_of_clusters]= d_centroids_z[local_tid];
     }
     __syncthreads();
-    if(has_element) {
-        for(int i = 0; i < number_of_clusters; ++i) {
-            const float _distance = distance_squared(_x, local_centroids[i], _y,local_centroids[i + number_of_clusters] , _z, local_centroids[i + 2*number_of_clusters]);
-            if(_distance < currentDistance) {
-                currentCentroid = i;
-                currentDistance = _distance;
-            }
+    for(int i = 0; i < number_of_clusters; ++i) {
+        const float _distance = distance_squared(_x, local_centroids[i], _y,local_centroids[i + number_of_clusters] , _z, local_centroids[i + 2*number_of_clusters]);
+        if(_distance < currentDistance) {
+            currentCentroid = i;
+            currentDistance = _distance;
         }
     }
 
@@ -182,12 +165,12 @@ __global__ void distances_calculation(float* d_points_x, float* d_points_y, floa
     int second = local_tid + offset;
     int third = local_tid + 2 * offset;
     int fourth = local_tid + 3 * offset;
+
     for(int i = 0; i < number_of_clusters; ++i) {
-        s_array[first] = (has_element && (currentCentroid == i)) ? _x : 0;
-        s_array[second] = (has_element && (currentCentroid == i)) ? _y : 0;
-        s_array[third] = (has_element && (currentCentroid == i)) ? _z : 0;
-        s_array[fourth] = (has_element && (currentCentroid == i)) ? 1 : 0;
-    
+        s_array[first] = (currentCentroid == i) ? _x : 0;
+        s_array[second] = (currentCentroid == i) ? _y : 0;
+        s_array[third] = (currentCentroid == i) ? _z : 0;
+        s_array[fourth] = (currentCentroid == i) ? 1 : 0;
         __syncthreads();
 
         for(int d = blockDim.x/2; d > 0; d>>=1) {
@@ -254,7 +237,7 @@ void runGPU(Points points, Points centroids, int number_of_examples, int iterati
     
 
     int mem = 3*number_of_clusters*sizeof(float) + 4*num_threads*sizeof(float);
-    int mem2 = 4*num_threads*sizeof(float);
+    int mem2 = 4*num_blocks*sizeof(float);
     printf("Starting parallel kmeans\n");
     auto start = std::chrono::system_clock::now();
     for(int i = 0; i < iterations; ++i) {
@@ -262,7 +245,7 @@ void runGPU(Points points, Points centroids, int number_of_examples, int iterati
         gpuErrchk( cudaPeekAtLastError() );
         gpuErrchk( cudaDeviceSynchronize() );
         //for(int i = 0; i < number_of_clusters; ++i) printf("centroid sums: %f %f %f\n", d_new_centroids_x[i], d_new_centroids_y[i], d_new_centroids_z[i]);
-        move_centroids<<<number_of_clusters, 256, mem2>>>(d_centroids_x, d_centroids_y, d_centroids_z, d_new_centroids_x, d_new_centroids_y, d_new_centroids_z, d_counters, number_of_clusters, num_blocks);
+        move_centroids<<<number_of_clusters, num_blocks, mem2>>>(d_centroids_x, d_centroids_y, d_centroids_z, d_new_centroids_x, d_new_centroids_y, d_new_centroids_z, d_counters, number_of_clusters);
         gpuErrchk( cudaPeekAtLastError() );
         gpuErrchk( cudaDeviceSynchronize() );
 
