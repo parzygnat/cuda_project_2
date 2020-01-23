@@ -137,12 +137,17 @@ __global__ void distances_calculation(float* d_points_x, float* d_points_y, floa
     float* s_array = (float*)local_centroids + 3 * number_of_clusters;
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
     int local_tid = threadIdx.x;
+    bool has_element = tid < number_of_examples;
     if(tid >= number_of_examples) return;
     int currentCentroid = 0;
-    float _x = d_points_x[tid];
-    float _y = d_points_y[tid];
-    float _z = d_points_z[tid];
-    float currentDistance = FLT_MAX;
+    float _x; float _y; float _z; float currentDistance;
+
+    if(has_element) {
+        currentDistance = FLT_MAX;
+        _x = d_points_x[tid]; 
+        _y = d_points_y[tid]; 
+        _z = d_points_z[tid];
+    }
 
     if(local_tid < number_of_clusters) {
         local_centroids[local_tid]= d_centroids_x[local_tid];
@@ -150,27 +155,29 @@ __global__ void distances_calculation(float* d_points_x, float* d_points_y, floa
         local_centroids[local_tid + number_of_clusters + number_of_clusters]= d_centroids_z[local_tid];
     }
     __syncthreads();
-    for(int i = 0; i < number_of_clusters; ++i) {
-        const float _distance = distance_squared(_x, local_centroids[i], _y,local_centroids[i + number_of_clusters] , _z, local_centroids[i + 2*number_of_clusters]);
-        if(_distance < currentDistance) {
-            currentCentroid = i;
-            currentDistance = _distance;
+    if(has_element) {
+        for(int i = 0; i < number_of_clusters; ++i) {
+            const float _distance = distance_squared(_x, local_centroids[i], _y,local_centroids[i + number_of_clusters] , _z, local_centroids[i + 2*number_of_clusters]);
+            if(_distance < currentDistance) {
+                currentCentroid = i;
+                currentDistance = _distance;
+            }
         }
     }
 
     __syncthreads();
 
     int offset = blockDim.x; //
-    int first = local_tid;
-    int second = local_tid + offset;
-    int third = local_tid + 2 * offset;
-    int fourth = local_tid + 3 * offset;
+    int first = local_tid; // x
+    int second = local_tid + offset; // y
+    int third = local_tid + 2 * offset; //z
+    int fourth = local_tid + 3 * offset; //counters
 
     for(int i = 0; i < number_of_clusters; ++i) {
-        s_array[first] = (currentCentroid == i) ? _x : 0;
-        s_array[second] = (currentCentroid == i) ? _y : 0;
-        s_array[third] = (currentCentroid == i) ? _z : 0;
-        s_array[fourth] = (currentCentroid == i) ? 1 : 0;
+        s_array[first] = (has_element && (currentCentroid == i)) ? _x : 0;
+        s_array[second] = (has_element && (currentCentroid == i)) ? _y : 0;
+        s_array[third] = (has_element && (currentCentroid == i)) ? _z : 0;
+        s_array[fourth] = (has_element && (currentCentroid == i)) ? 1 : 0;
         __syncthreads();
 
         for(int d = blockDim.x/2; d > 0; d>>=1) {
