@@ -262,7 +262,7 @@ void runGPU(Points points, Points centroids, int number_of_examples, int iterati
     
 
     int mem = 3*number_of_clusters*sizeof(float) + 4*num_threads*sizeof(float);
-    int mem2 = 4*num_blocks*sizeof(float);
+    int mem2 = 4*num_threads*sizeof(float);
     printf("Starting parallel kmeans\n");
     auto start = std::chrono::system_clock::now();
     for(int i = 0; i < iterations; ++i) {
