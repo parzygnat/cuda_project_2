@@ -127,7 +127,7 @@ __global__ void move_centroids(float* d_centroids_x, float* d_centroids_y, float
     d_new_centroids_x[tid] = 0;
     d_new_centroids_y[tid] = 0;
     d_new_centroids_z[tid] = 0;
-    d_counters[tid] = 0
+    d_counters[tid] = 0;
 }
 
 __global__ void distances_calculation(float* d_points_x, float* d_points_y, float* d_points_z, float* d_centroids_x, float* d_centroids_y, float* d_centroids_z, float* d_new_centroids_x, float* d_new_centroids_y, float* d_new_centroids_z, float* d_counters, int number_of_examples, int number_of_clusters) 
