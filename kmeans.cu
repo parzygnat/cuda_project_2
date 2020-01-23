@@ -98,7 +98,7 @@ __global__ void move_centroids(float* d_centroids_x, float* d_centroids_y, float
     float* this_centroid_z = (float*)this_centroid_x + 2 * + blockDim.x;
     float* this_centroid_counters = (float*)this_centroid_x + 3 * + blockDim.x;
     bool has_element = tid < number_of_clusters*prev_size;
-
+    return;
     if(has_element) {
         this_centroid_x[local_tid] = d_new_centroids_x[tid];
         this_centroid_y[local_tid] = d_new_centroids_y[tid];
