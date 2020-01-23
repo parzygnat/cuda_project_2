@@ -95,21 +95,13 @@ __global__ void move_centroids(float* d_centroids_x, float* d_centroids_y, float
     int local_tid = threadIdx.x;
     extern __shared__ float this_centroid_x[];
     float* this_centroid_y = (float*)this_centroid_x + blockDim.x; //our current block dim is our previous gridDim
-    float* this_centroid_z = (float*)this_centroid_x + 2 * blockDim.x;
-    float* this_centroid_counters = (float*)this_centroid_x + 3 * blockDim.x;
-    bool has_element = tid < number_of_clusters*prev_size;
-    if(has_element) {
-        this_centroid_x[local_tid] = d_new_centroids_x[tid];
-        this_centroid_y[local_tid] = d_new_centroids_y[tid];
-        this_centroid_z[local_tid] = d_new_centroids_z[tid];
-        this_centroid_counters[local_tid] = d_counters[tid];
-    }
-    else {
-        this_centroid_x[local_tid] = 0;
-        this_centroid_y[local_tid] = 0;
-        this_centroid_z[local_tid] = 0;
-        this_centroid_counters[local_tid] = 0;
-    }
+    float* this_centroid_z = (float*)this_centroid_x + 2 * + blockDim.x;
+    float* this_centroid_counters = (float*)this_centroid_x + 3 * + blockDim.x;
+
+    this_centroid_x[local_tid] = d_new_centroids_x[tid];
+    this_centroid_y[local_tid] = d_new_centroids_y[tid];
+    this_centroid_z[local_tid] = d_new_centroids_z[tid];
+    this_centroid_counters[local_tid] = d_counters[tid];
     __syncthreads();
 
     //TODO reduce on values -> works only when number of blocks is some power of 2 
@@ -131,12 +123,11 @@ __global__ void move_centroids(float* d_centroids_x, float* d_centroids_y, float
         d_centroids_z[blockIdx.x] = this_centroid_z[local_tid]/count;
     }
     __syncthreads();
-    if(has_element) {
-        d_new_centroids_x[tid] = 0;
-        d_new_centroids_y[tid] = 0;
-        d_new_centroids_z[tid] = 0;
-        d_counters[tid] = 0;
-    }
+
+    d_new_centroids_x[tid] = 0;
+    d_new_centroids_y[tid] = 0;
+    d_new_centroids_z[tid] = 0;
+    d_counters[tid] = 0;
 }
 
 __global__ void distances_calculation(float* d_points_x, float* d_points_y, float* d_points_z, float* d_centroids_x, float* d_centroids_y, float* d_centroids_z, float* d_new_centroids_x, float* d_new_centroids_y, float* d_new_centroids_z, float* d_counters, int number_of_examples, int number_of_clusters) 
