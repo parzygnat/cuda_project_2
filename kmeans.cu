@@ -139,7 +139,6 @@ __global__ void distances_calculation(float* d_points_x, float* d_points_y, floa
     int local_tid = threadIdx.x;
     if(tid >= number_of_examples) return;
     int currentCentroid = 0;
-    //coalesced read
     float _x = d_points_x[tid];
     float _y = d_points_y[tid];
     float _z = d_points_z[tid];
@@ -159,17 +158,21 @@ __global__ void distances_calculation(float* d_points_x, float* d_points_y, floa
         }
     }
 
-    int offset = blockDim.x;
+    __syncthreads();
+
+    __shared__ int offset = blockDim.x; //
     int first = local_tid;
     int second = local_tid + offset;
     int third = local_tid + 2 * offset;
     int fourth = local_tid + 3 * offset;
+
     for(int i = 0; i < number_of_clusters; ++i) {
         s_array[first] = (currentCentroid == i) ? _x : 0;
         s_array[second] = (currentCentroid == i) ? _y : 0;
         s_array[third] = (currentCentroid == i) ? _z : 0;
         s_array[fourth] = (currentCentroid == i) ? 1 : 0;
-
+        __syncthreads();
+        
         for(int d = blockDim.x/2; d > 0; d>>=1) {
             if(local_tid < d) {
                 s_array[first] += s_array[first + d];
