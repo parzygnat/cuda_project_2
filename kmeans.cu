@@ -98,7 +98,6 @@ __global__ void move_centroids(float* d_centroids_x, float* d_centroids_y, float
     float* this_centroid_z = (float*)this_centroid_x + 2 * + blockDim.x;
     float* this_centroid_counters = (float*)this_centroid_x + 3 * + blockDim.x;
     bool has_element = tid < number_of_clusters*prev_size;
-    return;
     if(has_element) {
         this_centroid_x[local_tid] = d_new_centroids_x[tid];
         this_centroid_y[local_tid] = d_new_centroids_y[tid];
@@ -111,6 +110,8 @@ __global__ void move_centroids(float* d_centroids_x, float* d_centroids_y, float
         this_centroid_z[local_tid] = 0;
         this_centroid_counters[local_tid] = 0;
     }
+    return;
+
     __syncthreads();
 
     //TODO reduce on values -> works only when number of blocks is some power of 2 
