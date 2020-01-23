@@ -93,7 +93,7 @@ __global__ void move_centroids(float* d_centroids_x, float* d_centroids_y, float
 {
     int tid = threadIdx.x + blockDim.x*blockIdx.x;
     int local_tid = threadIdx.x;
-    extern __shared__ float* this_centroid_x[];
+    extern __shared__ float this_centroid_x[];
     float* this_centroid_y = (float*)this_centroid_x + blockDim.x; //our current block dim is our previous gridDim
     float* this_centroid_z = (float*)this_centroid_x + 2 * + blockDim.x;
     float* this_centroid_counters = (float*)this_centroid_x + 3 * + blockDim.x;
