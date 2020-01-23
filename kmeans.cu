@@ -110,6 +110,7 @@ __global__ void move_centroids(float* d_centroids_x, float* d_centroids_y, float
         this_centroid_z[local_tid] = 0;
         this_centroid_counters[local_tid] = 0;
     }
+    return;
 
     __syncthreads();
 
@@ -183,13 +184,12 @@ __global__ void distances_calculation(float* d_points_x, float* d_points_y, floa
     int second = local_tid + offset;
     int third = local_tid + 2 * offset;
     int fourth = local_tid + 3 * offset;
-
     for(int i = 0; i < number_of_clusters; ++i) {
         if(has_element) {
-            s_array[first] = (has_element && currentCentroid == i) ? _x : 0;
-            s_array[second] = (has_element && currentCentroid == i) ? _y : 0;
-            s_array[third] = (has_element && currentCentroid == i) ? _z : 0;
-            s_array[fourth] = (has_element && currentCentroid == i) ? 1 : 0;
+            s_array[first] = (has_element && (currentCentroid == i)) ? _x : 0;
+            s_array[second] = (has_element && (currentCentroid == i)) ? _y : 0;
+            s_array[third] = (has_element && (currentCentroid == i)) ? _z : 0;
+            s_array[fourth] = (has_element && (currentCentroid == i)) ? 1 : 0;
         }
         __syncthreads();
 
