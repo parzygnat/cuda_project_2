@@ -147,9 +147,9 @@ __global__ void distances_calculation(float* d_points_x, float* d_points_y, floa
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
     int local_tid = threadIdx.x;
     int currentCentroid = 0;
-    float _x;
-    float _y;
-    float _z;
+    float _x = 0;
+    float _y = 0;
+    float _z = 0;
     float currentDistance = FLT_MAX;
     bool has_element = tid < number_of_examples;
 
@@ -183,12 +183,11 @@ __global__ void distances_calculation(float* d_points_x, float* d_points_y, floa
     int third = local_tid + 2 * offset;
     int fourth = local_tid + 3 * offset;
     for(int i = 0; i < number_of_clusters; ++i) {
-        if(has_element) {
-            s_array[first] = (has_element && (currentCentroid == i)) ? _x : 0;
-            s_array[second] = (has_element && (currentCentroid == i)) ? _y : 0;
-            s_array[third] = (has_element && (currentCentroid == i)) ? _z : 0;
-            s_array[fourth] = (has_element && (currentCentroid == i)) ? 1 : 0;
-        }
+        s_array[first] = (has_element && (currentCentroid == i)) ? _x : 0;
+        s_array[second] = (has_element && (currentCentroid == i)) ? _y : 0;
+        s_array[third] = (has_element && (currentCentroid == i)) ? _z : 0;
+        s_array[fourth] = (has_element && (currentCentroid == i)) ? 1 : 0;
+    
         __syncthreads();
 
         for(int d = blockDim.x/2; d > 0; d>>=1) {
