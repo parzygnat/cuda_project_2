@@ -105,6 +105,7 @@ __global__ void distances_calculation(float* d_points_x, float* d_points_y, floa
 {
     //this version works on atomics with 7x speedup
     extern __shared__ float local_centroids[];
+    float* s_array = (float*)local_centroids + 3 * number_of_clusters;
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
     int local_tid = threadIdx.x;
     if(tid >= number_of_examples) return;
@@ -129,12 +130,6 @@ __global__ void distances_calculation(float* d_points_x, float* d_points_y, floa
         }
     }
 
-    //Slow but simple.
-    //printf("tid: %d im adding to %d values %f %f %f, number of clusters is %d\n", tid, currentCentroid, _x, _y, _z, number_of_clusters);
-    atomicAdd(&d_new_centroids_x[currentCentroid], _x);
-    atomicAdd(&d_new_centroids_y[currentCentroid], _y);
-    atomicAdd(&d_new_centroids_z[currentCentroid], _z);
-    atomicAdd(&counters[currentCentroid], 1);
 
 }
 
@@ -178,7 +173,7 @@ void runGPU(Points points, Points centroids, int number_of_examples, int iterati
     
     int num_threads = 1024;
     int num_blocks = (number_of_examples + num_threads - 1) / num_threads;
-    int mem = 3*number_of_clusters*sizeof(float);
+    int mem = 3*number_of_clusters*sizeof(float) + 4*num_threads*sizeof(float);
     printf("Starting parallel kmeans\n");
     auto start = std::chrono::system_clock::now();
     for(int i = 0; i < iterations; ++i) {
