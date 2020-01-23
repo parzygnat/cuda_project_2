@@ -138,7 +138,6 @@ __global__ void distances_calculation(float* d_points_x, float* d_points_y, floa
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
     int local_tid = threadIdx.x;
     bool has_element = tid < number_of_examples;
-    if(tid >= number_of_examples) return;
     int currentCentroid = 0;
     float _x; float _y; float _z; float currentDistance;
 
