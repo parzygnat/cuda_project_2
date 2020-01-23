@@ -110,8 +110,6 @@ __global__ void move_centroids(float* d_centroids_x, float* d_centroids_y, float
         this_centroid_z[local_tid] = 0;
         this_centroid_counters[local_tid] = 0;
     }
-    return;
-
     __syncthreads();
 
     //TODO reduce on values -> works only when number of blocks is some power of 2 
