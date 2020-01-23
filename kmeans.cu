@@ -237,12 +237,11 @@ void runGPU(Points points, Points centroids, int number_of_examples, int iterati
     printf("Starting parallel kmeans\n");
     auto start = std::chrono::system_clock::now();
     for(int i = 0; i < iterations; ++i) {
-        cudaMemset(counters, 0, number_of_clusters*sizeof(int));
         distances_calculation<<<num_blocks, num_threads, mem>>>(d_points_x, d_points_y, d_points_z, d_centroids_x, d_centroids_y, d_centroids_z, d_new_centroids_x, d_new_centroids_y, d_new_centroids_z, d_counters, number_of_examples, number_of_clusters);
         gpuErrchk( cudaPeekAtLastError() );
         gpuErrchk( cudaDeviceSynchronize() );
         //for(int i = 0; i < number_of_clusters; ++i) printf("centroid sums: %f %f %f\n", d_new_centroids_x[i], d_new_centroids_y[i], d_new_centroids_z[i]);
-        move_centroids<<<number_of_clusters, num_blocks>>>(d_centroids_x, d_centroids_y, d_centroids_z, d_new_centroids_x, d_new_centroids_y, d_new_centroids_z, d_counters, number_of_clusters, );
+        move_centroids<<<number_of_clusters, num_blocks>>>(d_centroids_x, d_centroids_y, d_centroids_z, d_new_centroids_x, d_new_centroids_y, d_new_centroids_z, d_counters, number_of_clusters);
         gpuErrchk( cudaPeekAtLastError() );
         gpuErrchk( cudaDeviceSynchronize() );
 
@@ -264,7 +263,7 @@ void runGPU(Points points, Points centroids, int number_of_examples, int iterati
     cudaFree(d_new_centroids_x);
     cudaFree(d_new_centroids_y);
     cudaFree(d_new_centroids_z);
-    cudaFree(counters);
+    cudaFree(d_counters);
 
 }
 
