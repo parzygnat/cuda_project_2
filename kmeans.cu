@@ -160,7 +160,7 @@ __global__ void distances_calculation(float* d_points_x, float* d_points_y, floa
 
     __syncthreads();
 
-    __shared__ int offset = blockDim.x; //
+    int offset = blockDim.x; //
     int first = local_tid;
     int second = local_tid + offset;
     int third = local_tid + 2 * offset;
@@ -172,7 +172,7 @@ __global__ void distances_calculation(float* d_points_x, float* d_points_y, floa
         s_array[third] = (currentCentroid == i) ? _z : 0;
         s_array[fourth] = (currentCentroid == i) ? 1 : 0;
         __syncthreads();
-        
+
         for(int d = blockDim.x/2; d > 0; d>>=1) {
             if(local_tid < d) {
                 s_array[first] += s_array[first + d];
