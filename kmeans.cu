@@ -304,7 +304,7 @@ int main(int argc, char *argv[])
         printf("The number of examples has to be smaller than number of clusters\n\n");
         return 0;
     }
-    float currentDistance = -FLT_MAX;
+    float currentDistance = 0;
     int currentExample = 0;
     Points points(number_of_examples);
     static std::random_device seed;
@@ -376,7 +376,7 @@ int main(int argc, char *argv[])
             }
         }
         centroids[j] = points[currentExample];
-        currentDistance = -FLT_MAX;
+        currentDistance = 0;
     }
 
     //Datum PRINTING
