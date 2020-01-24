@@ -97,7 +97,7 @@ __global__ void move_centroids(float* d_centroids_x, float* d_centroids_y, float
     float* this_centroid_y = (float*)this_centroid_x + blockDim.x; //our current block dim is our previous gridDim
     float* this_centroid_z = (float*)this_centroid_x + blockDim.x + blockDim.x;
     float* this_centroid_counters = (float*)this_centroid_x + blockDim.x + blockDim.x + blockDim.x;
-    bool has_element = tid < prev_blocks*gridDim.x;
+    bool has_element = local_tid < prev_blocks;
 
     if(has_element) {
         this_centroid_x[local_tid] = d_new_centroids_x[tid];
