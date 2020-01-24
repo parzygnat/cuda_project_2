@@ -368,7 +368,7 @@ int main(int argc, char *argv[])
         for(int i = 0; i < number_of_examples; ++i) {
             float _distance = 0;
             for(int k = 0; k < j; k++){
-                _distance += distance_squared(points[i].x, centroids[k].x, points[i].y, centroids[k].y , points[i].z, centroids[k].z);
+                _distance += squared_distance(points[i], centroids[k]);
             }
             if(_distance > currentDistance) {
                 currentExample = i;
