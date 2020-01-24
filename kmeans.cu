@@ -372,9 +372,14 @@ int main(int argc, char *argv[])
         for(int i = 0; i < number_of_examples; ++i) {
             if(used.count(i)) continue;
             float _distance = 0;
-            for(int k = 0; k < j; ++k){
-                _distance += squared_distance(points[i], centroids[k]);
-            }
+            if(j < 3)
+                for(int k = j - 1; k < j; ++k){
+                    _distance += squared_distance(points[i], centroids[k]);
+                }
+            else
+                for(int k = j - 2; k < j; ++k){
+                    _distance += squared_distance(points[i], centroids[k]);
+                }
             if(_distance > currentDistance) {
                 currentExample = i;
                 currentDistance = _distance;
