@@ -376,6 +376,7 @@ int main(int argc, char *argv[])
             }
         }
         centroids[j] = points[currentExample];
+        currentDistance = -FLT_MAX
     }
 
     //Datum PRINTING
