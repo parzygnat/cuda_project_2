@@ -363,16 +363,20 @@ int main(int argc, char *argv[])
     // for(auto& centroid : centroids) {
     //     centroid = points[indices(random_number_generator)];
     // }
-    centroids[0] = points[indices(random_number_generator)];
+    std::set<int> used;
+    used.insert(indices(random_number_generator));
+    centroids[0] = points[*(used.begin())];
     for(int j = 1; j < number_of_clusters; ++j){
         for(int i = 0; i < number_of_examples; ++i) {
+            if(used.count(i)) continue;
             float _distance = 0;
-            for(int k = 0; k < j; k++){
+            for(int k = 0; k < j; ++k){
                 _distance += squared_distance(points[i], centroids[k]);
             }
             if(_distance > currentDistance) {
                 currentExample = i;
                 currentDistance = _distance;
+                used.insert(i);
             }
         }
         centroids[j] = points[currentExample];
