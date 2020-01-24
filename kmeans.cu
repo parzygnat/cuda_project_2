@@ -8,6 +8,8 @@
 #include <float.h>
 #include <chrono>
 #include <set>
+#include <fstream>
+
 
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
@@ -114,7 +116,6 @@ __global__ void move_centroids(float* d_centroids_x, float* d_centroids_y, float
         this_centroid_counters[local_tid] = 0;
     }
     __syncthreads();
-
     //TODO reduce on values -> works only when number of blocks is some power of 2 
     for(int d = blockDim.x/2; d > 0; d>>=1) {
         if(local_tid < d) {
@@ -125,20 +126,19 @@ __global__ void move_centroids(float* d_centroids_x, float* d_centroids_y, float
         }
         __syncthreads();
     }
-
     //assignment of new values
     if(local_tid == 0) {
-        const float count = this_centroid_counters[local_tid];
+        const float count = max(1.0, this_centroid_counters[local_tid]);
         d_centroids_x[blockIdx.x] = this_centroid_x[local_tid]/count;
         d_centroids_y[blockIdx.x] = this_centroid_y[local_tid]/count;
         d_centroids_z[blockIdx.x] = this_centroid_z[local_tid]/count;
     }
     __syncthreads();
     if(has_element) { 
-        d_new_centroids_x[tid] = 0;
-        d_new_centroids_y[tid] = 0;
-        d_new_centroids_z[tid] = 0;
-        d_counters[tid] = 0;
+        d_new_centroids_x[tid - blockIdx.x*(blockDim.x - prev_blocks)] = 0;
+        d_new_centroids_y[tid - blockIdx.x*(blockDim.x - prev_blocks)] = 0;
+        d_new_centroids_z[tid - blockIdx.x*(blockDim.x - prev_blocks)] = 0;
+        d_counters[tid - blockIdx.x*(blockDim.x - prev_blocks)] = 0;
     }
 }
 
@@ -273,8 +273,13 @@ void runGPU(Points points, Points centroids, int number_of_examples, int iterati
     float duration = 1000.0*std::chrono::duration<float>(end - start).count();
     printf("\nElapsed time in milliseconds : %f ms.\n\n", duration);
 
-    for (int i = 0; i < number_of_clusters; i++){
-        printf("%f  %f  %f", d_centroids_x[i], d_centroids_y[i], d_centroids_z[i]);     printf("\n");}
+    std::ofstream myfile;
+    myfile.open ("results.csv");
+    for (int i = 0; i < number_of_clusters; i++){ 
+        printf("%f  %f  %f", d_centroids_x[i], d_centroids_y[i], d_centroids_z[i]);     printf("\n");
+        myfile << d_centroids_x[i] <<", "<< d_centroids_y[i]<<", " << d_centroids_z[i]<<"\n";
+    }
+    myfile.close();
 
 
     cudaFree(d_points_x);
@@ -361,48 +366,52 @@ int main(int argc, char *argv[])
 
     Points centroids(number_of_clusters);
 
+    std::ofstream myfile;
+    myfile.open ("input.csv");
     std::uniform_real_distribution<float> indices(0, number_of_examples - 1);
-    // for(auto& centroid : centroids) {
-    //     centroid = points[indices(random_number_generator)];
+    for(auto& centroid : centroids) {
+        centroid = points[indices(random_number_generator)];
+        myfile << centroid.x <<", "<< centroid.y <<", " << centroid.z <<"\n";
+    }
+    myfile.close();
+    // std::set<int> used;
+    // used.insert(indices(random_number_generator));
+    // centroids[0] = points[*(used.begin())];
+    // for(int j = 1; j < number_of_clusters; ++j){
+    //     for(int i = 0; i < number_of_examples; ++i) {
+    //         if(used.count(i)) continue;
+    //         float _distance = 0;
+    //         if(j < 3)
+    //             for(int k = j - 1; k < j; ++k){
+    //                 _distance += squared_distance(points[i], centroids[k]);
+    //             }
+    //         else
+    //             for(int k = 1; k < j; ++k){
+    //                 _distance += squared_distance(points[i], centroids[k]);
+    //             }
+    //         if(_distance > currentDistance) {
+    //             currentExample = i;
+    //             currentDistance = _distance;
+    //             used.insert(i);
+    //         }
+    //     }
+    //     centroids[j] = points[currentExample];
+    //     currentDistance = 0;
     // }
-    std::set<int> used;
-    used.insert(indices(random_number_generator));
-    centroids[0] = points[*(used.begin())];
-    for(int j = 1; j < number_of_clusters; ++j){
-        for(int i = 0; i < number_of_examples; ++i) {
-            if(used.count(i)) continue;
-            float _distance = 0;
-            if(j < 3)
-                for(int k = j - 1; k < j; ++k){
-                    _distance += squared_distance(points[i], centroids[k]);
-                }
-            else
-                for(int k = 1; k < j; ++k){
-                    _distance += squared_distance(points[i], centroids[k]);
-                }
-            if(_distance > currentDistance) {
-                currentExample = i;
-                currentDistance = _distance;
-                used.insert(i);
-            }
-        }
-        centroids[j] = points[currentExample];
-        currentDistance = 0;
-    }
-    int j = 0;
-    for(int i = 0; i < number_of_examples; ++i) {
-        if(used.count(i)) continue;
-        float _distance = 0;
-        for(int k = number_of_clusters; k > 0; --k){
-            _distance += squared_distance(points[i], centroids[k]);
-        }
-        if(_distance > currentDistance) {
-            currentExample = i;
-            currentDistance = _distance;
-            used.insert(i);
-        }
-    }
-    centroids[j] = points[currentExample];
+    // int j = 0;
+    // for(int i = 0; i < number_of_examples; ++i) {
+    //     if(used.count(i)) continue;
+    //     float _distance = 0;
+    //     for(int k = number_of_clusters; k > 0; --k){
+    //         _distance += squared_distance(points[i], centroids[k]);
+    //     }
+    //     if(_distance > currentDistance) {
+    //         currentExample = i;
+    //         currentDistance = _distance;
+    //         used.insert(i);
+    //     }
+    // }
+    // centroids[j] = points[currentExample];
 
     //Datum PRINTING
     for(auto& Datum : centroids) {
