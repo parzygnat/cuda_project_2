@@ -389,20 +389,20 @@ int main(int argc, char *argv[])
         centroids[j] = points[currentExample];
         currentDistance = 0;
     }
-    // int j = 0;
-    // for(int i = 0; i < number_of_examples; ++i) {
-    //     if(used.count(i)) continue;
-    //     float _distance = 0;
-    //     for(int k = number_of_clusters; k > 0; ++k){
-    //         _distance += squared_distance(points[i], centroids[k]);
-    //     }
-    //     if(_distance > currentDistance) {
-    //         currentExample = i;
-    //         currentDistance = _distance;
-    //         used.insert(i);
-    //     }
-    // }
-    // centroids[j] = points[currentExample];
+    int j = 0;
+    for(int i = 0; i < number_of_examples; ++i) {
+        if(used.count(i)) continue;
+        float _distance = 0;
+        for(int k = number_of_clusters; k > 0; --k){
+            _distance += squared_distance(points[i], centroids[k]);
+        }
+        if(_distance > currentDistance) {
+            currentExample = i;
+            currentDistance = _distance;
+            used.insert(i);
+        }
+    }
+    centroids[j] = points[currentExample];
 
     //Datum PRINTING
     for(auto& Datum : centroids) {
