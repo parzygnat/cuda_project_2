@@ -380,9 +380,9 @@ int main(int argc, char *argv[])
     }
 
     //Datum PRINTING
-    // for(auto& Datum : points) {
-    //     printf("x is %f y is %f and z is %f \n", Datum.x, Datum.y, Datum.z);
-    // }
+    for(auto& Datum : centroids) {
+        printf("x is %f y is %f and z is %f \n", Datum.x, Datum.y, Datum.z);
+    }
     
     runGPU(points, centroids, number_of_examples, iterations, number_of_clusters);
     runCPU(points, centroids, number_of_examples, iterations, number_of_clusters);
