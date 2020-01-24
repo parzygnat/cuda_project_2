@@ -89,7 +89,7 @@ void runCPU(Points points, Points centroids, int number_of_examples, int iterati
 __device__ float distance_squared(float x1, float x2, float y1, float y2, float z1, float z2) {
     return (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) + (z1-z2)*(z1-z2);
 }
-__global__ void move_centroids(float* d_centroids_x, float* d_centroids_y, float* d_centroids_z, float* d_new_centroids_x, float* d_new_centroids_y, float* d_new_centroids_z, float* d_counters, int number_of_clusters) 
+__global__ void move_centroids(float* d_centroids_x, float* d_centroids_y, float* d_centroids_z, float* d_new_centroids_x, float* d_new_centroids_y, float* d_new_centroids_z, float* d_counters, int number_of_clusters, int prev_blocks) 
 {
     int tid = threadIdx.x + blockDim.x*blockIdx.x;
     int local_tid = threadIdx.x;
@@ -97,11 +97,20 @@ __global__ void move_centroids(float* d_centroids_x, float* d_centroids_y, float
     float* this_centroid_y = (float*)this_centroid_x + blockDim.x; //our current block dim is our previous gridDim
     float* this_centroid_z = (float*)this_centroid_x + blockDim.x + blockDim.x;
     float* this_centroid_counters = (float*)this_centroid_x + blockDim.x + blockDim.x + blockDim.x;
+    bool has_element = tid < prev_blocks*gridDim.x;
 
-    this_centroid_x[local_tid] = d_new_centroids_x[tid];
-    this_centroid_y[local_tid] = d_new_centroids_y[tid];
-    this_centroid_z[local_tid] = d_new_centroids_z[tid];
-    this_centroid_counters[local_tid] = d_counters[tid];
+    if(has_element) {
+        this_centroid_x[local_tid] = d_new_centroids_x[tid];
+        this_centroid_y[local_tid] = d_new_centroids_y[tid];
+        this_centroid_z[local_tid] = d_new_centroids_z[tid];
+        this_centroid_counters[local_tid] = d_counters[tid];
+    }
+    else {
+        this_centroid_x[local_tid] = 0;
+        this_centroid_y[local_tid] = 0;
+        this_centroid_z[local_tid] = 0;
+        this_centroid_counters[local_tid] = 0;
+    }
     __syncthreads();
 
     //TODO reduce on values -> works only when number of blocks is some power of 2 
@@ -123,11 +132,12 @@ __global__ void move_centroids(float* d_centroids_x, float* d_centroids_y, float
         d_centroids_z[blockIdx.x] = this_centroid_z[local_tid]/count;
     }
     __syncthreads();
-
-    d_new_centroids_x[tid] = 0;
-    d_new_centroids_y[tid] = 0;
-    d_new_centroids_z[tid] = 0;
-    d_counters[tid] = 0;
+    if(has_element) { 
+        d_new_centroids_x[tid] = 0;
+        d_new_centroids_y[tid] = 0;
+        d_new_centroids_z[tid] = 0;
+        d_counters[tid] = 0;
+    }
 }
 
 __global__ void distances_calculation(float* d_points_x, float* d_points_y, float* d_points_z, float* d_centroids_x, float* d_centroids_y, float* d_centroids_z, float* d_new_centroids_x, float* d_new_centroids_y, float* d_new_centroids_z, float* d_counters, int number_of_examples, int number_of_clusters) 
@@ -244,7 +254,7 @@ void runGPU(Points points, Points centroids, int number_of_examples, int iterati
     
 
     int mem = 3*number_of_clusters*sizeof(float) + 4*num_threads*sizeof(float);
-    int mem2 = 4*num_blocks*sizeof(float);
+    int mem2 = 4*num_threads*sizeof(float);
     printf("Starting parallel kmeans\n");
     auto start = std::chrono::system_clock::now();
     for(int i = 0; i < iterations; ++i) {
@@ -252,7 +262,7 @@ void runGPU(Points points, Points centroids, int number_of_examples, int iterati
         gpuErrchk( cudaPeekAtLastError() );
         gpuErrchk( cudaDeviceSynchronize() );
         //for(int i = 0; i < number_of_clusters; ++i) printf("centroid sums: %f %f %f\n", d_new_centroids_x[i], d_new_centroids_y[i], d_new_centroids_z[i]);
-        move_centroids<<<number_of_clusters, num_blocks, mem2>>>(d_centroids_x, d_centroids_y, d_centroids_z, d_new_centroids_x, d_new_centroids_y, d_new_centroids_z, d_counters, number_of_clusters);
+        move_centroids<<<number_of_clusters, num_threads, mem2>>>(d_centroids_x, d_centroids_y, d_centroids_z, d_new_centroids_x, d_new_centroids_y, d_new_centroids_z, d_counters, number_of_clusters, num_blocks);
         gpuErrchk( cudaPeekAtLastError() );
         gpuErrchk( cudaDeviceSynchronize() );
 
