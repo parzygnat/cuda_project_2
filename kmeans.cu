@@ -366,16 +366,16 @@ int main(int argc, char *argv[])
     centroids[0] = points[indices(random_number_generator)];
     for(int j = 1; j < number_of_clusters; ++j){
         for(int i = 0; i < number_of_examples; ++i) {
-            const float _distance;
+            const float _distance = 0;
             for(int k = 0; k < j; k++){
                 _distance += distance_squared(points[i].x, centroids[k].x, points[i].y, centroids[k].y , points[i].z, centroids[k].z);
             }
-            if(_distance < currentDistance) {
+            if(_distance > currentDistance) {
                 currentExample = i;
                 currentDistance = _distance;
             }
         }
-        centroids[j] = currentExample;
+        centroids[j] = points[currentExample];
     }
 
     //Datum PRINTING
