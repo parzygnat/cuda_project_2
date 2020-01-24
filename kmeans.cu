@@ -304,6 +304,8 @@ int main(int argc, char *argv[])
         printf("The number of examples has to be smaller than number of clusters\n\n");
         return 0;
     }
+    float currentDistance = FLT_MAX;
+    int currentExample = 0;
     Points points(number_of_examples);
     static std::random_device seed;
     static std::mt19937 random_number_generator(seed());
@@ -356,10 +358,26 @@ int main(int argc, char *argv[])
     }
 
     Points centroids(number_of_clusters);
+
     std::uniform_real_distribution<float> indices(0, number_of_examples - 1);
-    for(auto& centroid : centroids) {
-        centroid = points[indices(random_number_generator)];
+    // for(auto& centroid : centroids) {
+    //     centroid = points[indices(random_number_generator)];
+    // }
+    centroids[0] = points[indices(random_number_generator)];
+    for(int j = 1; j < number_of_clusters; ++j){
+        for(int i = 0; i < number_of_examples; ++i) {
+            const float _distance;
+            for(int k = 0; k < j; k++){
+                distance += distance_squared(examples[i].x, centroids[k].x, examples[i].y, centroids[k].y , examples[i].z, centroids[k].z);
+            }
+            if(_distance < currentDistance) {
+                currentExample = i;
+                currentDistance = _distance;
+            }
+        }
+        centroids[j] = currentExample;
     }
+
     //Datum PRINTING
     // for(auto& Datum : points) {
     //     printf("x is %f y is %f and z is %f \n", Datum.x, Datum.y, Datum.z);
