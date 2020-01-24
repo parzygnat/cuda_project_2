@@ -100,10 +100,10 @@ __global__ void move_centroids(float* d_centroids_x, float* d_centroids_y, float
     bool has_element = local_tid < prev_blocks;
 
     if(has_element) {
-        this_centroid_x[local_tid] = d_new_centroids_x[blockIdx*prev_blocks + local_tid];
-        this_centroid_y[local_tid] = d_new_centroids_y[blockIdx*prev_blocks + local_tid];
-        this_centroid_z[local_tid] = d_new_centroids_z[blockIdx*prev_blocks + local_tid];
-        this_centroid_counters[local_tid] = d_counters[blockIdx*prev_blocks + local_tid];
+        this_centroid_x[local_tid] = d_new_centroids_x[blockIdx.x * prev_blocks + local_tid];
+        this_centroid_y[local_tid] = d_new_centroids_y[blockIdx.x * prev_blocks + local_tid];
+        this_centroid_z[local_tid] = d_new_centroids_z[blockIdx.x * prev_blocks + local_tid];
+        this_centroid_counters[local_tid] = d_counters[blockIdx.x * prev_blocks + local_tid];
     }
     else {
         this_centroid_x[local_tid] = 0;
