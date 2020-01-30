@@ -322,7 +322,7 @@ int main(int argc, char *argv[])
          points[i].y = indices_general(random_number_generator);
          points[i].z = indices_general(random_number_generator);
     }
-
+    std::uniform_real_distribution<float> indices(0, number_of_examples - 1);
     Points centroids(number_of_clusters);
     for(auto& centroid : centroids) {
         centroid = points[indices(random_number_generator)];
@@ -330,7 +330,6 @@ int main(int argc, char *argv[])
 
     std::ofstream myfile;
     myfile.open ("input.csv");
-    std::uniform_real_distribution<float> indices(0, number_of_examples - 1);
     for(auto& point : points) {
         myfile << point.x <<", "<< point.y <<", " << point.z <<"\n";
     }
