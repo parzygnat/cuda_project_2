@@ -393,7 +393,7 @@ int main(int argc, char *argv[])
     for(int i = 0; i < number_of_examples; ++i) {
         if(used.count(i)) continue;
         float _distance = 0;
-        for(int k = number_of_clusters; k > 0; --k){
+        for(int k = number_of_clusters; k > number_of_clusters-2; --k){
             _distance += squared_distance(points[i], centroids[k]);
         }
         if(_distance > currentDistance) {
@@ -405,9 +405,9 @@ int main(int argc, char *argv[])
     centroids[j] = points[currentExample];
 
     //Datum PRINTING
-    for(auto& Datum : centroids) {
-        printf("x is %f y is %f and z is %f \n", Datum.x, Datum.y, Datum.z);
-    }
+    //for(auto& Datum : centroids) {
+    //    printf("x is %f y is %f and z is %f \n", Datum.x, Datum.y, Datum.z);
+    //}
     
     runGPU(points, centroids, number_of_examples, iterations, number_of_clusters);
     runCPU(points, centroids, number_of_examples, iterations, number_of_clusters);
