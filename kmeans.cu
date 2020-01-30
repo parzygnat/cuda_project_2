@@ -316,47 +316,6 @@ int main(int argc, char *argv[])
     Points points(number_of_examples);
     static std::random_device seed;
     static std::mt19937 random_number_generator(seed());
-
-    {
-    //8 domain generation
-        // std::uniform_real_distribution<float> indices_upper(grid_max_value*0.5, grid_max_value);
-        // std::uniform_real_distribution<float> indices_lower(-grid_max_value, -grid_max_value*0.5);
-        // for(int i = 0; i < number_of_examples; ++i) {
-        //     if(i < number_of_examples / number_of_clusters){
-        //     points[i].x = indices_lower(random_number_generator);
-        //     points[i].y = indices_upper(random_number_generator);
-        //     points[i].z = indices_upper(random_number_generator);
-        //     } else if(i < 2*number_of_examples/number_of_clusters) {
-        //     points[i].x = indices_lower(random_number_generator);
-        //     points[i].y = indices_upper(random_number_generator);
-        //     points[i].z = indices_lower(random_number_generator);
-        //     } else if(i < 3*number_of_examples/number_of_clusters) {
-        //     points[i].x = indices_upper(random_number_generator);
-        //     points[i].y = indices_upper(random_number_generator);
-        //     points[i].z = indices_lower(random_number_generator);
-        //     } else if(i < 4*number_of_examples/number_of_clusters) {
-        //     points[i].x = indices_upper(random_number_generator);
-        //     points[i].y = indices_upper(random_number_generator);
-        //     points[i].z = indices_upper(random_number_generator);
-        //     } else if(i < 5*number_of_examples/number_of_clusters) {
-        //     points[i].x = indices_upper(random_number_generator);
-        //     points[i].y = indices_lower(random_number_generator);
-        //     points[i].z = indices_upper(random_number_generator);
-        //     } else if(i < 6*number_of_examples/number_of_clusters) {
-        //     points[i].x = indices_upper(random_number_generator);
-        //     points[i].y = indices_lower(random_number_generator);
-        //     points[i].z = indices_lower(random_number_generator);
-        //     } else if(i < 7*number_of_examples/number_of_clusters) {
-        //     points[i].x = indices_lower(random_number_generator);
-        //     points[i].y = indices_lower(random_number_generator);
-        //     points[i].z = indices_lower(random_number_generator);
-        //     } else if(i < number_of_examples) {
-        //     points[i].x = indices_lower(random_number_generator);
-        //     points[i].y = indices_lower(random_number_generator);
-        //     points[i].z = indices_upper(random_number_generator);
-        //     }
-        // }
-    }
     std::uniform_real_distribution<float> indices_general(-grid_max_value, grid_max_value);
     for(int i = 0; i < number_of_examples; ++i) {
          points[i].x = indices_general(random_number_generator);
@@ -371,7 +330,9 @@ int main(int argc, char *argv[])
     std::uniform_real_distribution<float> indices(0, number_of_examples - 1);
     for(auto& centroid : centroids) {
         centroid = points[indices(random_number_generator)];
-        myfile << centroid.x <<", "<< centroid.y <<", " << centroid.z <<"\n";
+    }
+    for(auto& point : points) {
+        myfile << point.x <<", "<< point.y <<", " << point.z <<"\n";
     }
     myfile.close();
     // std::set<int> used;
